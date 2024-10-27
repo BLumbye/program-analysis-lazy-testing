@@ -163,4 +163,4 @@ cython_debug/
 
 **/generated/*
 **/decompiled/*
-/utils/jvm2json.exe
+**/jvm2json.exe

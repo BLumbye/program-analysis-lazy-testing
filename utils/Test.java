@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 
 
 
-// Make Words annotation repeatable
+// Mark tests
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Test {
     boolean shouldBeRunAgain() default false;

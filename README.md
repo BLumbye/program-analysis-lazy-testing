@@ -16,6 +16,12 @@ Place ```jvm2json.exe``` in the utils directory.
 python utils/java2json.py
 ```
 
+Or watch for changes in Java files
+
+```sh
+python utils/java2json.py -w
+```
+
 ### Run Unit Tests
 
 ```sh

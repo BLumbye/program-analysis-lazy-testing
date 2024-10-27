@@ -3,8 +3,11 @@ import subprocess
 import fnmatch
 import shutil
 from pathlib import Path
+import argparse
 
+seperator = "\\" if os.name == 'nt' else "/"
 def main():
+    print("Start compiling...")
     for cb in find_codebases():
         next_dir = os.path.join(cb, "next")
         prev_dir = os.path.join(cb, "previous")
@@ -12,6 +15,7 @@ def main():
         compile(prev_dir)
         decompile(next_dir)
         decompile(prev_dir)
+    print("Done!")
 
 def find_codebases():
     cb_dir = os.path.join(os.path.dirname(__file__), "../codebases")
@@ -38,6 +42,7 @@ def compile(directory):
         [
             "javac",
             *(find_files_root(directory, "java")),
+            f"utils{seperator}Test.java",
             "-d",
             generated_dir,
         ],
@@ -45,7 +50,8 @@ def compile(directory):
     )
 
     if compile_result.returncode == 0:
-        print(f"Compiled to class")
+        # print(f"Compiled to class")
+        pass
     else:
         print(f"Error Compiling to class: {compile_result.returncode}")
 
@@ -62,13 +68,45 @@ def decompile(dir):
         Path(dest_dir).mkdir(exist_ok=True, parents=True)
         filename = os.path.splitext(file)[0]
         to_dir = os.path.join(dest_dir, filename + ".json")
-
-        jvm2json = subprocess.run(["jvm2json", "-s", from_dir , "-t", to_dir], shell = True)
+        
+        jvm2json = subprocess.run([f"utils{seperator}jvm2json", "-s", from_dir , "-t", to_dir], shell = True)
 
         if jvm2json.returncode == 0:
-            print(f"Decompiled {file} to json")
+            # print(f"Decompiled {file} to json")
+            pass
         else:
             print(f"Error decompiling {file} to json: {jvm2json.returncode}")
 
-if __name__ == "__main__":
+
+def watch_codebase():
     main()
+    import time
+    from watchdog.events import FileSystemEvent, FileSystemEventHandler
+    from watchdog.observers import Observer
+
+    class MyEventHandler(FileSystemEventHandler):
+        def on_any_event(self, event: FileSystemEvent) -> None:
+            if ".java" in event.src_path:
+                main()
+
+    event_handler = MyEventHandler()
+    observer = Observer()
+    observer.schedule(event_handler, "codebases", recursive=True)
+    observer.start()
+    try:
+        while True:
+            time.sleep(1)
+    finally:
+        observer.stop()
+        observer.join()
+
+if __name__ == "__main__":
+    
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('-w', dest='watch_codebase', action='store_const', const=True, default=False, help='Watch the codebase for changes and automatically recompile and decompile')
+    args = parser.parse_args()
+    # print(args.watch_codebase)
+    if args.watch_codebase:
+        watch_codebase()
+    else:
+        main()
