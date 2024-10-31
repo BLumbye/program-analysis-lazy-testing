@@ -5,7 +5,6 @@ import shutil
 from pathlib import Path
 import argparse
 
-seperator = "\\" if os.name == 'nt' else "/"
 def main():
     print("Start compiling...")
     for cb in find_codebases():
@@ -18,7 +17,7 @@ def main():
     print("Done!")
 
 def find_codebases():
-    cb_dir = os.path.join(os.path.dirname(__file__), "../codebases")
+    cb_dir = os.path.join(os.path.dirname(__file__), "..", "codebases")
     return [ os.path.join(cb_dir, cb) for cb in os.listdir(cb_dir) ]
 
 def find_files(folder, extension):
@@ -37,12 +36,13 @@ def find_files_root(folder, extension):
 def compile(directory):
     generated_dir = os.path.join(directory, "generated")
     shutil.rmtree(generated_dir, ignore_errors=True)
+    Path(generated_dir).mkdir()
 
     compile_result = subprocess.run(
         [
             "javac",
             *(find_files_root(directory, "java")),
-            f"utils{seperator}Test.java",
+            os.path.join("utils", "Test.java"),
             "-d",
             generated_dir,
         ],
@@ -69,7 +69,7 @@ def decompile(dir):
         filename = os.path.splitext(file)[0]
         to_dir = os.path.join(dest_dir, filename + ".json")
         
-        jvm2json = subprocess.run([f"utils{seperator}jvm2json", "-s", from_dir , "-t", to_dir], shell = True)
+        jvm2json = subprocess.run([os.path.join("utils", "jvm2json"),  "-s", from_dir , "-t", to_dir], shell = True)
 
         if jvm2json.returncode == 0:
             # print(f"Decompiled {file} to json")
