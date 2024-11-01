@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from enum import Enum
 
 #TODO: rename functions to methods
 
@@ -18,25 +19,54 @@ def function_name(class_name, function_name):
     parts = map(str, parts)
     return ":".join(parts)
 
+class BinaryOp(str, Enum):
+    EQ = "==",
+    NE = "!=",
+    LT = "<",
+    GE = ">=",
+    GT = ">",
+    LE = "<=",
 
+    ADD = "+", #incr can be stored as add
+    SUB = "-",
+    MUL = "*",
+    DIV = "/",
+    REM = "%"
 
+class UnaryOp(str, Enum):
+    NEG = "-1",
+    NOT = "!" # introduced to make it easier to save constraints
 
+class ValueKind(str, Enum):
+    CONST = "@CONST",
+    IMMED = "@IMMED"
 
 @dataclass
-class Expr:
-    left: Expr | str # str means it is a constant
-    right: Expr | str # str means it is a constant
-    # We are not using enum because of JSON(might be wrong, haven't looked into it)
-    operation: str # oneof {"+", "-", "*", "/", "%"}
-    cache_id: str # a unique id, so we can cache part of the computation
+class Value:
+    kind: ValueKind
+    value: str | int # CONST is str | IMMED is int
+
+@dataclass
+class UnaryExpr:
+    arg: Expr
+    operator: UnaryOp
+    cache_id: int # a unique id, so we can cache part of the computation 
+
+@dataclass
+class BinaryExpr:
+    left: Expr
+    right: Expr
+    operator: BinaryOp
+    cache_id: int # a unique id, so we can cache part of the computation 
+
+Expr = BinaryExpr | UnaryExpr | Value
 
 @dataclass
 class Constraint:
     # if it is not too inefficient it would be nice to have a depends on constants here.
     test_name: str
-    left: Expr
-    right: Expr
-    comparator: str # oneof {"<", "<=", "==", "!=", ">", ">="}
+    cache_size: int # the number of unique ids in the constraint
+    expr: Expr
 
 # Note: result is written so it is able to be serialized
 @dataclass
@@ -46,7 +76,6 @@ class InterpretResult:
     depends_on_constants: list[str]
     depends_on_functions: list[str]
     constraints: list[Constraint]
-
 
 # The thing stored in JSON
 @dataclass

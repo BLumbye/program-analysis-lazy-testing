@@ -1,6 +1,7 @@
 import os
 import subprocess
 import fnmatch
+import stat
 import shutil
 from pathlib import Path
 import argparse
@@ -33,9 +34,13 @@ def find_files_root(folder, extension):
         matches.append(os.path.join(root, file))
     return matches
 
+def make_writeable(f, path, _):
+        os.chmod(path, stat.S_IWRITE)
+        f(path)
+
 def compile(directory):
     generated_dir = os.path.join(directory, "generated")
-    shutil.rmtree(generated_dir, ignore_errors=True)
+    shutil.rmtree(generated_dir, onerror=make_writeable)
     Path(generated_dir).mkdir()
 
     compile_result = subprocess.run(
@@ -58,7 +63,7 @@ def compile(directory):
 def decompile(dir):
     generated_dir = os.path.join(dir, "generated")
     decompiled_dir = os.path.join(dir, "decompiled")
-    shutil.rmtree(decompiled_dir, ignore_errors=True)
+    shutil.rmtree(decompiled_dir, onerror=make_writeable)
     Path(decompiled_dir).mkdir()
 
     for _, file_dir, file in find_files(generated_dir, "class"):
@@ -102,10 +107,9 @@ def watch_codebase():
 
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Java to JSON')
     parser.add_argument('-w', dest='watch_codebase', action='store_const', const=True, default=False, help='Watch the codebase for changes and automatically recompile and decompile')
     args = parser.parse_args()
-    # print(args.watch_codebase)
     if args.watch_codebase:
         watch_codebase()
     else:

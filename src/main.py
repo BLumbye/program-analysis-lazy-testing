@@ -3,7 +3,7 @@ import sys
 import json
 
 from diff_codebase import *
-from constraint_verifier import *
+from constraint_evaluator import *
 
 # arg: (codebase)
 # run dynamic on previous
@@ -78,7 +78,7 @@ def tests_to_be_rerun(prev: SavedResult, next: EntitySnapshot, diff: SnapshotDif
             if test not in to_be_run and test not in has_been_evaluated:
                 constraints = prev.tests[test].constraints
                 has_been_evaluated.add(test)
-                if not verify_constraints(constraints, next):
+                if not satisfies_constraints(constraints, next):
                     to_be_run.add(test)
     
 # print(json.dumps(load_decompiled(code_base_path("constant_becomes_equal", True))))

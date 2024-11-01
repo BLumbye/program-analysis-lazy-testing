@@ -22,8 +22,8 @@ Or watch for changes in Java files
 python utils/java2json.py -w
 ```
 
-### Run Unit Tests
+### Run Tests
 
 ```sh
-python -m unittest tests/test.py
+pytest tests
 ```
