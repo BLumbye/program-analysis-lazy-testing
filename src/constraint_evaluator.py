@@ -1,7 +1,7 @@
 import operator
 from typing import Optional
 
-from src.common import *
+from common import *
 
 BINARY_OP = {
     BinaryOp.EQ: operator.eq,
@@ -18,20 +18,16 @@ BINARY_OP = {
     BinaryOp.REM: operator.mod,
 }
 
-UNARY_OP = {
-    UnaryOp.NEG: operator.neg,
-    UnaryOp.NOT: operator.not_
-}
-
-def satisfies_constraints(constraints: list[Constraint], next: EntitySnapshot) -> bool:
-    all(constraints, lambda c: evaluate_expr(c.expr, next.constants, [None] * c.cache_size))
+def satisfies_constraints(prev: InterpretResult, next: EntitySnapshot) -> bool:
+    cache = [None] * prev.cache_size
+    all(prev.constraints, lambda c: evaluate_expr(c.expr, next.constants, cache))
 
 def evaluate_expr(e: Expr, constants: dict[str, int], cache: list[Optional[bool | int]]) -> bool | int:
-    match e:
-        case BinaryExpr(): return evaluate_binary(e, constants, cache)
-        case UnaryExpr(): return evaluate_unary(e, constants, cache)
-        case Value(): return evaluate_value(e, constants)
-        case e: raise ValueError(f"Unsupported expression: {e}")
+    if type(e) is str:
+        return evaluate_value(e, constants)
+    else:
+        # assumes it is a binary expression
+        return evaluate_binary(e, constants, cache)
 
 def evaluate_binary(e: BinaryExpr, constants: dict[str, int], cache: list[Optional[bool | int]]) -> bool | int:
     if not cache[e.cache_id]:
@@ -45,26 +41,7 @@ def evaluate_binary(e: BinaryExpr, constants: dict[str, int], cache: list[Option
    
     return cache[e.cache_id]
 
-def evaluate_unary(e: UnaryExpr, constants: dict[str, int], cache: list[Optional[bool | int]]) -> bool | int:
-    if not cache[e.cache_id]:
-
-        if (op := UNARY_OP.get(e.operator)) is not None:
-            arg = evaluate_expr(e.arg, constants, cache)
-            cache[e.cache_id] = op(arg)
-        else:
-            raise ValueError(f"Unsupported unary operator: {e.operator}")
-    
-    return cache[e.cache_id]
-
-def evaluate_value(e: Value, constants: dict[str, int]) -> int:
-    match e.kind:
-        case ValueKind.CONST:
-            if (v := constants.get(e.value)) is not None:
-                return v
-            raise ValueError(f"Undefined constant: {e.value}")
-        
-        case ValueKind.IMMED:
-            return e.value
-        
-        case kind:
-            raise ValueError(f"Unsupported value kind: {kind}")
+def evaluate_value(e: str, constants: dict[str, int]) -> int:
+    if (v := constants.get(e)) is not None:
+        return v
+    raise ValueError(f"Undefined constant: {e}")
