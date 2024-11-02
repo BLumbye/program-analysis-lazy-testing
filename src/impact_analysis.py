@@ -7,6 +7,7 @@ import jsondiff as jd
 from jsondiff import diff
 import json
 import dependency_graph
+from utils.method_loader import load_class
 
 
 def compare_bytecode(dependency_graph, bc1, bc2):
@@ -18,8 +19,6 @@ def compare_bytecode(dependency_graph, bc1, bc2):
     if methods_diff == {}:
         return
 
-    print(methods_diff)
-
     # Analyze the diff to find the impacted methods
     changed_methods = [] 
     changed_tests = []
@@ -29,7 +28,7 @@ def compare_bytecode(dependency_graph, bc1, bc2):
         if method_diff == jd.insert:
             for (index, new_method) in methods_diff[method_diff]:
                 # Check if the method is a test
-                if any(annotation.type == "utils/Test" for annotation in new_method["annotations"]):
+                if any(annotation["type"] == "utils/Test" for annotation in new_method["annotations"]):
                     added_tests.append(new_method["name"])
         elif isinstance(method_diff, int):
             index = method_diff
@@ -49,13 +48,18 @@ def compare_bytecode(dependency_graph, bc1, bc2):
                 changed_methods.append(methods2[index]["name"])
     
     # Check whether any of the changed methods are in dependency graphs
-
-            
+    impacted_tests = set(changed_tests + added_tests)
+    for test in dependency_graph:
+        if any(method in dependency_graph[test] for method in changed_methods):
+            impacted_tests.add(test)
+    
+    return impacted_tests
 
 
 if __name__ == "__main__":
     bc1 = json.loads(open("codebases/constant_becomes_equal/previous/decompiled/Simple.json", "r").read())
     bc2 = json.loads(open("codebases/constant_becomes_equal/next/decompiled/Simple.json", "r").read())
-    dependencies = dependency_graph.run_tests([""])
+    dependencies = json.loads(dependency_graph.run_tests(load_class(
+        "codebases/constant_becomes_equal/previous/decompiled/Simple.json"), {}))
 
-    compare_bytecode({}, bc1, bc2)
+    print(compare_bytecode(dependencies, bc1, bc2))

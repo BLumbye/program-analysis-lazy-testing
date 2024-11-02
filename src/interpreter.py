@@ -2,13 +2,12 @@
 """ The skeleton for writing an interpreter given the bytecode.
 """
 
-from dataclasses import dataclass
-import sys
 import logging
-from typing import Literal, TypeAlias, Optional
 from collections import deque
-import json
-import jpamb_utils as utils
+from dataclasses import dataclass
+from typing import Optional
+
+from utils.method_loader import JavaClass
 
 l = logging
 l.basicConfig(level=logging.DEBUG, format="%(message)s")
@@ -17,26 +16,6 @@ l.basicConfig(level=logging.DEBUG, format="%(message)s")
 class AssertionError:
     def throw(self):
         return "assertion error"
-
-# Translate the information to the format used by MethodId - only handles up to a single argument and does not handle array arguments
-def bytecode_to_methodname(bc):
-    TYPE_LOOKUP: dict[utils.JvmType, str] = {
-        "boolean": "Z",
-        "int": "I",
-    }
-
-    arg_count = len(bc["method"]["args"])
-    arg_type = TYPE_LOOKUP[bc["method"]
-                           ["args"][0]] if arg_count > 0 else ""
-    return_type = "V"
-    if isinstance(bc["method"]["returns"], dict) and bc["method"]["returns"]["kind"] == "array":
-        return_type = f"[{
-            TYPE_LOOKUP[bc["method"]["returns"]["type"]]}"
-    elif bc["method"]["returns"] != None:
-        return_type = TYPE_LOOKUP[bc["method"]["returns"]]
-    method_name = f"{bc["method"]["ref"]["name"].replace(
-        "/", ".")}.{bc["method"]["name"]}:({arg_type}){return_type}"
-    return method_name
 
 
 @dataclass
@@ -50,7 +29,7 @@ class Method:
 # Does not have an explicit heap  as we just use the built-in from Python
 @dataclass
 class SimpleInterpreter:
-    # heap: deque
+    java_class: JavaClass
     method_stack: deque[Method]
     done: Optional[str] = None
     step_count: int = 0
@@ -64,19 +43,19 @@ class SimpleInterpreter:
                 self.step_count += 1
                 return
 
-            next = self.method_stack[-1].bytecode[self.method_stack[-1].pc]
-            l.debug(f"STEP {self.step_count}:")
-            l.debug(f"  PC: {self.method_stack[-1].pc} {next}")
-            l.debug(f"  LOCALS: {self.method_stack[-1].locals}")
-            l.debug(f"  STACK: {self.method_stack[-1].stack}")
+        next = self.method_stack[-1].bytecode[self.method_stack[-1].pc]
+        l.debug(f"STEP {self.step_count}:")
+        l.debug(f"  PC: {self.method_stack[-1].pc} {next}")
+        l.debug(f"  LOCALS: {self.method_stack[-1].locals}")
+        l.debug(f"  STACK: {self.method_stack[-1].stack}")
 
-            if fn := getattr(self, "step_" + next["opr"], None):
-                fn(next)
-            else:
-                self.step_count += 1
-                return (f"can't handle {next['opr']!r}", None)
-
+        if fn := getattr(self, "step_" + next["opr"], None):
+            fn(next)
+        else:
             self.step_count += 1
+            raise Exception(f"can't handle {next['opr']!r}")
+
+        self.step_count += 1
 
     def interpret(self, limit=1000):
         for i in range(limit):
@@ -120,8 +99,7 @@ class SimpleInterpreter:
             case "le":
                 result = value1 <= value2
             case _:
-                self.done = f"can't handle {
-                    bc['condition']!r} for if operations"
+                self.done = f"can't handle {bc['condition']} for if operations"
         if result:
             self.method_stack[-1].pc = bc["target"]
         else:
@@ -145,8 +123,7 @@ class SimpleInterpreter:
             case "le":
                 result = value <= 0
             case _:
-                self.done = f"can't handle {
-                    bc['condition']!r} for ifz operations"
+                self.done = f"can't handle {bc['condition']} for ifz operations"
         if result:
             self.method_stack[-1].pc = bc["target"]
         else:
@@ -171,14 +148,11 @@ class SimpleInterpreter:
             object_ref = self.method_stack[-1].stack.pop()
             self.method_stack[-1].pc += 1
         elif bc["access"] == "static":
-            method_name = bytecode_to_methodname(bc)
-            method_id = utils.MethodId.parse(
-                method_name)
-            bytecode = method_id.load()["code"]["bytecode"]
+            java_method = self.java_class.methods[bc["method"]["name"]]
             locals = deque()
-            for i in range(len(bc["method"]["args"])):
+            for arg in bc["method"]["args"]:
                 locals.append(self.method_stack[-1].stack.pop())
-            method = Method(bytecode, locals, [], 0)
+            method = Method(java_method.bytecode, locals, [], 0)
             self.method_stack.append(method)
             self.method_stack[-2].pc += 1
         else:
@@ -313,6 +287,11 @@ class SimpleInterpreter:
             self.method_stack[-1].stack.append(bc["value"]["value"])
         self.method_stack[-1].pc += 1
 
+    def step_pop(self, bc):
+        for i in range(bc["words"]):
+            self.method_stack[-1].stack.pop()
+        self.method_stack[-1].pc += 1
+
     def step_return(self, bc):
         if len(self.method_stack) > 1:
             # Method return
@@ -323,18 +302,3 @@ class SimpleInterpreter:
         else:
             # Program return
             self.done = "ok"
-
-
-if __name__ == "__main__":
-    methodid = utils.MethodId.parse(sys.argv[1])
-    inputs = utils.InputParser.parse(sys.argv[2])
-    method = methodid.load()
-    # Convert all inputs to integers
-    inputs = [[l.tolocal() for l in i.value] if isinstance(
-        i, utils.IntListValue) or isinstance(i, utils.CharListValue) else i.tolocal() for i in inputs]
-    interpreter = SimpleInterpreter(
-        # heap=deque(),
-        method_stack=deque(
-            [Method(method["code"]["bytecode"], inputs, [], 0)])
-    )
-    print(interpreter.interpret())
