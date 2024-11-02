@@ -29,7 +29,7 @@ def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: obje
                 if inst["access"] == "static":
                     next_class_name = inst["method"]["ref"]["name"]
                     next_name = inst["method"]["name"]
-                    next_method = codebase.get_method(next_class_name, method_name, [])
+                    next_method = codebase.get_method(next_class_name, next_name, [])
 
                     if next_name not in visited:
                         visited.add(next_name)
@@ -54,11 +54,13 @@ def codebase_snapshot(codebase: CodeBase) -> EntitySnapshot:
     visited = set()
     snapshot = EntitySnapshot()
 
-    for class_name, field in codebase.get_fields().items():
-        field_snapshot(snapshot, class_name, field)
+    for class_name, fields in codebase.get_fields().items():
+        for field in fields:
+            field_snapshot(snapshot, class_name, field)
 
-    for class_name, test in codebase.get_tests().items():
-        method_snapshot(snapshot, class_name, test, codebase, visited)
+    for class_name, tests in codebase.get_tests().items():
+        for test in tests:
+            method_snapshot(snapshot, class_name, test, codebase, visited)
                 
     return snapshot
 

@@ -6,7 +6,6 @@ def test_code_loads_classes():
 
 def test_find_simple_test():
     codebase = load_codebase("constant_becomes_equal", True)
-    print(codebase.get_tests()["Simple"])
     assert any(x["name"] == "simpleTest" for x in codebase.get_tests()["Simple"])
 
 def test_find_method_A():

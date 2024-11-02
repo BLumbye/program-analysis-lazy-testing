@@ -40,7 +40,8 @@ def make_writeable(f, path, _):
 
 def compile(directory):
     generated_dir = os.path.join(directory, "generated")
-    shutil.rmtree(generated_dir, onerror=make_writeable)
+    if os.path.exists(generated_dir):
+        shutil.rmtree(generated_dir, onerror=make_writeable)
     Path(generated_dir).mkdir()
 
     compile_result = subprocess.run(
@@ -63,7 +64,8 @@ def compile(directory):
 def decompile(dir):
     generated_dir = os.path.join(dir, "generated")
     decompiled_dir = os.path.join(dir, "decompiled")
-    shutil.rmtree(decompiled_dir, onerror=make_writeable)
+    if os.path.exists(decompiled_dir):
+        shutil.rmtree(decompiled_dir, onerror=make_writeable)
     Path(decompiled_dir).mkdir()
 
     for _, file_dir, file in find_files(generated_dir, "class"):
