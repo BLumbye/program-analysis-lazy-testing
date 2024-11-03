@@ -76,11 +76,15 @@ class SymbolicInterpreter(SimpleInterpreter):
         value1 = self.method_stack[-1].stack.pop()
         
         if len(self.method_stack[-1].symbolic_stack)>0:
+            
             _,expr2 = self.method_stack[-1].symbolic_stack.pop()
             expr = None
-            if value1 in self.method_stack[-1].symbolic_stack:
+            
+            checkForValue = any(item[0] == value1 for item in self.method_stack[-1].symbolic_stack)
+            if checkForValue:
                 _,expr = self.method_stack[-1].symbolic_stack.pop()
-
+        
+        
         match bc["operant"]:
             case "add":
                 self.method_stack[-1].stack.append(value1 + value2)
