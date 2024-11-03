@@ -78,7 +78,7 @@ class SymbolicInterpreter(SimpleInterpreter):
         if len(self.method_stack[-1].symbolic_stack)>0:
             _,expr2 = self.method_stack[-1].symbolic_stack.pop()
             expr = None
-            if value1 in self.method_stack[-1].symbolic_stack[-1]:
+            if value1 in self.method_stack[-1].symbolic_stack:
                 _,expr = self.method_stack[-1].symbolic_stack.pop()
 
         match bc["operant"]:
@@ -88,7 +88,7 @@ class SymbolicInterpreter(SimpleInterpreter):
                 if not expr is None:
                             new_expr = expr+'+'+expr2
                 else:
-                            new_expr = expr2+'+'+str(value2)
+                            new_expr = str(value1)+'+'+ expr2
                 self.method_stack[-1].symbolic_stack.append((value1 + value2,new_expr))
             case "sub":
                 self.method_stack[-1].stack.append(value1 - value2)
@@ -96,14 +96,14 @@ class SymbolicInterpreter(SimpleInterpreter):
                 if not expr is None:
                             new_expr = expr+'-'+expr2
                 else:
-                            new_expr = expr2+'-'+str(value2)
+                            new_expr =str(value1)+'-'+ expr2
                 self.method_stack[-1].symbolic_stack.append((value1 - value2,new_expr))
             case "mul":
                 self.method_stack[-1].stack.append(value1 * value2)
                 if not expr is None:
                         new_expr = expr+'*'+expr2
                 else:
-                        new_expr = expr2+'*'+str(value2)
+                        new_expr =str(value1) +'*'+expr2
              
                 self.method_stack[-1].symbolic_stack.append((value1 * value2,new_expr))
             case "div":
@@ -115,14 +115,14 @@ class SymbolicInterpreter(SimpleInterpreter):
                         if not expr is None:
                             new_expr = expr+'//'+expr2
                         else:
-                            new_expr = expr2+'//'+str(value2)
+                            new_expr =str(value1) +'//'+expr2
                         self.method_stack[-1].symbolic_stack.append((value1 // value2,new_expr))
                     else:
                         self.method_stack[-1].stack.append(value1 / value2)
                         if not expr is None:
                             new_expr = expr+'/'+expr2
                         else:
-                            new_expr = expr2+'/'+str(value2)
+                            new_expr =str(value1) +'/'+expr2
                     
                         self.method_stack[-1].symbolic_stack.append((value1 / value2,new_expr))
             case "rem":
@@ -134,7 +134,7 @@ class SymbolicInterpreter(SimpleInterpreter):
                     if not expr is None:
                             new_expr = expr+'%'+expr2
                     else:
-                            new_expr = expr2+'%'+str(value2)
+                            new_expr =str(value1)+'%'+ expr2
                     self.method_stack[-1].symbolic_stack.append((value1 % value2,new_expr))
         self.method_stack[-1].pc += 1
     
