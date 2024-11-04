@@ -7,7 +7,7 @@ from collections import deque
 from dataclasses import dataclass
 from typing import Optional
 
-from utils.method_loader import JavaClass
+from common import CodeBase
 
 l = logging
 l.basicConfig(level=logging.DEBUG, format="%(message)s")
@@ -20,6 +20,7 @@ class AssertionError:
 
 @dataclass
 class Method:
+    name: str
     bytecode: list
     locals: list
     stack: deque
@@ -29,7 +30,7 @@ class Method:
 # Does not have an explicit heap  as we just use the built-in from Python
 @dataclass
 class SimpleInterpreter:
-    java_class: JavaClass
+    codebase: CodeBase
     method_stack: deque[Method]
     done: Optional[str] = None
     step_count: int = 0
@@ -148,11 +149,11 @@ class SimpleInterpreter:
             object_ref = self.method_stack[-1].stack.pop()
             self.method_stack[-1].pc += 1
         elif bc["access"] == "static":
-            java_method = self.java_class.methods[bc["method"]["name"]]
+            new_method = self.codebase.get_method(bc["method"]["ref"]["name"], bc["method"]["name"], [])
             locals = deque()
             for arg in bc["method"]["args"]:
                 locals.append(self.method_stack[-1].stack.pop())
-            method = Method(java_method.bytecode, locals, [], 0)
+            method = Method(bc["method"]["name"], new_method["code"]["bytecode"], locals, [], 0)
             self.method_stack.append(method)
             self.method_stack[-2].pc += 1
         else:
