@@ -28,7 +28,7 @@ def binary_generator(draw, constants: dict[str, int], cache: list[None]):
     right = draw(pick_node(constants, cache))
     op = draw(st.sampled_from(BinaryOp))
     cache.append(None)
-    return BinaryExpr(left, right, op, len(cache) - 1)
+    return BinaryExpr(left, op, right, len(cache) - 1)
 
 @st.composite
 def value_generator(draw, constants: dict[str, int]) -> int:

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import os
 import json
@@ -43,8 +43,8 @@ class BinaryOp(str, Enum):
 @dataclass
 class BinaryExpr:
     left: Expr
-    right: Expr
     operator: BinaryOp
+    right: Expr
     cache_id: int # a unique id [0-n], so we can cache part of the computation 
 
 Expr = BinaryExpr | str # str is a constant_name
@@ -69,18 +69,14 @@ class InterpretResult:
 # The thing stored in JSON
 @dataclass
 class SavedResult:
-    entity_changes_tests: dict[str, list[str]] # 
-    tests: dict[str, InterpretResult]
     snapshot: EntitySnapshot
+    entity_changes_tests: dict[str, list[str]] = field(default_factory=dict)
+    tests: dict[str, InterpretResult] = field(default_factory=dict)
 
 @dataclass
 class EntitySnapshot:
-    constants: dict[str, int] # cached values
-    method_hashes: dict[str, int] # hash does not include constants values
-
-    def __init__(self):
-        self.constants = {}
-        self.method_hashes = {}
+    constants: dict[str, int] = field(default_factory=dict) # cached values
+    method_hashes: dict[str, int] = field(default_factory=dict) # hash does not include constants values
 
 # very unfinished
 @dataclass

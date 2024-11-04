@@ -1,4 +1,3 @@
-from __future__ import annotations
 from hypothesis import given, settings
 
 from src.common import *
