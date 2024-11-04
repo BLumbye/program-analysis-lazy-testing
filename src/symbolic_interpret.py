@@ -20,7 +20,7 @@ l.basicConfig(level=logging.DEBUG, format="%(message)s")
  
 class ChildMethod(Method):
     symbolic_stack = deque()
-    linear_constraint_stack = deque()
+    linear_constraint_stack = list()
 
 class SymbolicInterpreter(SimpleInterpreter):
 
@@ -67,7 +67,7 @@ class SymbolicInterpreter(SimpleInterpreter):
         l.debug(f"  LOCALS: {self.method_stack[-1].locals}")
         l.debug(f"  STACK: {self.method_stack[-1].stack}")
 
-        return self.done,self.method_stack[-1].linear_constraint_stack,self.cacheID
+        return InterpretResult('Test name, please change', self.done,None,None, self.method_stack[-1].linear_constraint_stack, self.cacheID)
 
     @override
     def step_get(self, bc):
@@ -245,7 +245,7 @@ if __name__ == "__main__":
             method_stack=deque(
                 [ChildMethod(method["code"]["bytecode"], inputs, [], 0)])
         )
-        status, constraints, cache_size = interpreter.interpret()
+        status= interpreter.interpret().status
         print(status)
         #return InterpretResult('Test nam', status, None,None,constraints,cache_size)
            
