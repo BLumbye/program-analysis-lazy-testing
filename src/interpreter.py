@@ -2,14 +2,12 @@
 """ The skeleton for writing an interpreter given the bytecode.
 """
 
-from dataclasses import dataclass
-from pathlib import Path
-import sys
 import logging
-from typing import Literal, TypeAlias, Optional
 from collections import deque
-import json
-import jpamb_utils as utils
+from dataclasses import dataclass
+from typing import Optional
+
+from common import CodeBase
 
 l = logging
 l.basicConfig(level=logging.DEBUG, format="%(message)s")
@@ -22,39 +20,47 @@ class AssertionError:
 
 @dataclass
 class Method:
+    name: str
     bytecode: list
     locals: list
     stack: deque
     pc: int
 
 
-# Does not have an explicit heap or method stack as we just use the built-in from Python
+# Does not have an explicit heap  as we just use the built-in from Python
 @dataclass
 class SimpleInterpreter:
-    # heap: deque
+    codebase: CodeBase
     method_stack: deque[Method]
     done: Optional[str] = None
+    step_count: int = 0
+
+    def step(self):
+        if self.method_stack[-1].pc >= len(self.method_stack[-1].bytecode):
+            if len(self.method_stack) > 1:
+                self.method_stack.pop()
+            else:
+                self.done = "ok"
+                self.step_count += 1
+                return
+
+        next = self.method_stack[-1].bytecode[self.method_stack[-1].pc]
+        l.debug(f"STEP {self.step_count}:")
+        l.debug(f"  PC: {self.method_stack[-1].pc} {next}")
+        l.debug(f"  LOCALS: {self.method_stack[-1].locals}")
+        l.debug(f"  STACK: {self.method_stack[-1].stack}")
+
+        if fn := getattr(self, "step_" + next["opr"], None):
+            fn(next)
+        else:
+            self.step_count += 1
+            raise Exception(f"can't handle {next['opr']!r}")
+
+        self.step_count += 1
 
     def interpret(self, limit=1000):
         for i in range(limit):
-            if self.method_stack[-1].pc >= len(self.method_stack[-1].bytecode):
-                if len(self.method_stack) > 1:
-                    self.method_stack.pop()
-                else:
-                    self.done = "ok"
-                    break
-
-            next = self.method_stack[-1].bytecode[self.method_stack[-1].pc]
-            l.debug(f"STEP {i}:")
-            l.debug(f"  PC: {self.method_stack[-1].pc} {next}")
-            l.debug(f"  LOCALS: {self.method_stack[-1].locals}")
-            l.debug(f"  STACK: {self.method_stack[-1].stack}")
-
-            if fn := getattr(self, "step_" + next["opr"], None):
-                fn(next)
-            else:
-                return (f"can't handle {next['opr']!r}", None)
-
+            self.step()
             if self.done:
                 break
         else:
@@ -94,8 +100,7 @@ class SimpleInterpreter:
             case "le":
                 result = value1 <= value2
             case _:
-                self.done = f"can't handle {
-                    bc['condition']!r} for if operations"
+                self.done = f"can't handle {bc['condition']} for if operations"
         if result:
             self.method_stack[-1].pc = bc["target"]
         else:
@@ -119,8 +124,7 @@ class SimpleInterpreter:
             case "le":
                 result = value <= 0
             case _:
-                self.done = f"can't handle {
-                    bc['condition']!r} for ifz operations"
+                self.done = f"can't handle {bc['condition']} for ifz operations"
         if result:
             self.method_stack[-1].pc = bc["target"]
         else:
@@ -141,34 +145,15 @@ class SimpleInterpreter:
 
     # Only handles static methods properly
     def step_invoke(self, bc):
-        TYPE_LOOKUP: dict[utils.JvmType, str] = {
-            "boolean": "Z",
-            "int": "I",
-        }
-
         if bc["access"] == "special":
             object_ref = self.method_stack[-1].stack.pop()
             self.method_stack[-1].pc += 1
         elif bc["access"] == "static":
-            # Translate the information to the format used by MethodId - only handles up to a single argument and does not handle array arguments
-            arg_count = len(bc["method"]["args"])
-            arg_type = TYPE_LOOKUP[bc["method"]
-                                   ["args"][0]] if arg_count > 0 else ""
-            return_type = "V"
-            if isinstance(bc["method"]["returns"], dict) and bc["method"]["returns"]["kind"] == "array":
-                return_type = f"[{
-                    TYPE_LOOKUP[bc["method"]["returns"]["type"]]}"
-            elif bc["method"]["returns"] != None:
-                return_type = TYPE_LOOKUP[bc["method"]["returns"]]
-            method_name = f"{bc["method"]["ref"]["name"].replace(
-                "/", ".")}.{bc["method"]["name"]}:({arg_type}){return_type}"
-            method_id = utils.MethodId.parse(
-                method_name)
-            bytecode = method_id.load()["code"]["bytecode"]
+            new_method = self.codebase.get_method(bc["method"]["ref"]["name"], bc["method"]["name"], [])
             locals = deque()
-            for i in range(arg_count):
+            for arg in bc["method"]["args"]:
                 locals.append(self.method_stack[-1].stack.pop())
-            method = Method(bytecode, locals, [], 0)
+            method = Method(bc["method"]["name"], new_method["code"]["bytecode"], locals, [], 0)
             self.method_stack.append(method)
             self.method_stack[-2].pc += 1
         else:
@@ -222,29 +207,31 @@ class SimpleInterpreter:
     def step_cast(self, bc):
         cast_type = bc['to']
         value = self.stack.pop()
-        new_value:None
-        if cast_type =='short':
+        new_value: None
+        if cast_type == 'short':
             new_value = self.int_to_short(value)
         if cast_type == 'byte':
             new_value = self.int_to_byte(value)
         if cast_type == 'char':
             new_value = chr(value)
         self.stack.append(new_value)
-        self.pc+=1
-    @staticmethod 
+        self.pc += 1
+
+    @staticmethod
     def int_to_short(value):
         # Apply a mask to simulate 16-bit signed integer range (-32768 to 32767)
-            short_value = (value & 0xFFFF)
-            if short_value >= 0x8000:  # If the value exceeds 32767
-                short_value -= 0x10000  # Convert to negative (two's complement)
-            return short_value
+        short_value = (value & 0xFFFF)
+        if short_value >= 0x8000:  # If the value exceeds 32767
+            short_value -= 0x10000  # Convert to negative (two's complement)
+        return short_value
+
     @staticmethod
     def int_to_byte(value):
         # Apply a mask to simulate 8-bit signed integer range (-128 to 127)
-            byte_value = (value & 0xFF)
-            if byte_value >= 0x80:  # If the value exceeds 127
-                byte_value -= 0x100  # Convert to negative (two's complement)
-            return byte_value
+        byte_value = (value & 0xFF)
+        if byte_value >= 0x80:  # If the value exceeds 127
+            byte_value -= 0x100  # Convert to negative (two's complement)
+        return byte_value
 
     # Only handles 1-dimensional integer arrays, not multi-dimensional
     def step_newarray(self, bc):
@@ -301,6 +288,11 @@ class SimpleInterpreter:
             self.method_stack[-1].stack.append(bc["value"]["value"])
         self.method_stack[-1].pc += 1
 
+    def step_pop(self, bc):
+        for i in range(bc["words"]):
+            self.method_stack[-1].stack.pop()
+        self.method_stack[-1].pc += 1
+
     def step_return(self, bc):
         if len(self.method_stack) > 1:
             # Method return
@@ -311,18 +303,3 @@ class SimpleInterpreter:
         else:
             # Program return
             self.done = "ok"
-
-
-if __name__ == "__main__":
-    methodid = utils.MethodId.parse(sys.argv[1])
-    inputs = utils.InputParser.parse(sys.argv[2])
-    method = methodid.load()
-    # Convert all inputs to integers
-    inputs = [[l.tolocal() for l in i.value] if isinstance(
-        i, utils.IntListValue) or isinstance(i, utils.CharListValue) else i.tolocal() for i in inputs]
-    interpreter = SimpleInterpreter(
-        # heap=deque(),
-        method_stack=deque(
-            [Method(method["code"]["bytecode"], inputs, [], 0)])
-    )
-    print(interpreter.interpret())
