@@ -144,6 +144,19 @@ class SymbolicInterpreter(SimpleInterpreter):
         self.method_stack[-1].pc += 1
 
     @override
+    def step_cast(self, bc):
+        cast_type = bc['to']
+        value,expr = self.method_stack[-1].symbolic_stack.pop()
+        new_value:None
+        if cast_type =='short':
+            new_value = self.int_to_short(value)
+        if cast_type == 'byte':
+            new_value = self.int_to_byte(value)
+        if cast_type == 'char':
+            new_value = chr(value)
+        self.method_stack[-1].symbolic_stack.append((new_value,expr))
+        self.pc+=1
+    @override
     def step_ifz(self, bc):
         value,expr = self.method_stack[-1].symbolic_stack.pop()
     
@@ -227,6 +240,18 @@ class SymbolicInterpreter(SimpleInterpreter):
         else:
             self.method_stack[-1].pc += 1
         self.cacheID+=1
+    
+    @override
+    def step_return(self, bc):
+        if len(self.method_stack) > 1:
+            # Method return
+            if bc["type"] is not None:
+                self.method_stack[-2].stack.append(
+                    self.method_stack[-1].symbolic_stack.pop())
+            self.method_stack.pop()
+        else:
+            # Program return
+            self.done = "ok"
     
 if __name__ == "__main__":
         methodid = utils.MethodId.parse(sys.argv[1])
