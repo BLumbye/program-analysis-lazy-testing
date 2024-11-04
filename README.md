@@ -22,8 +22,13 @@ Or watch for changes in Java files
 python utils/java2json.py -w
 ```
 
-### Run Unit Tests
+### Run Tests
 
 ```sh
-python -m unittest tests/test.py
+pytest tests
 ```
+
+### CodeBases
+
+Codebase are meant to test isolated scenarios and are meant to not change much over time so we can write unit test for them. 
+If you need to test how bytecode is generated consider using the scratch codebase.

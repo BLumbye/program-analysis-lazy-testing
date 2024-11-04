@@ -1,11 +1,11 @@
 import os
 import subprocess
 import fnmatch
+import stat
 import shutil
 from pathlib import Path
 import argparse
 
-seperator = "\\" if os.name == 'nt' else "/"
 def main():
     print("Start compiling...")
     for cb in find_codebases():
@@ -18,7 +18,7 @@ def main():
     print("Done!")
 
 def find_codebases():
-    cb_dir = os.path.join(os.path.dirname(__file__), "../codebases")
+    cb_dir = os.path.join(os.path.dirname(__file__), "..", "codebases")
     return [ os.path.join(cb_dir, cb) for cb in os.listdir(cb_dir) ]
 
 def find_files(folder, extension):
@@ -34,15 +34,21 @@ def find_files_root(folder, extension):
         matches.append(os.path.join(root, file))
     return matches
 
+def make_writeable(f, path, _):
+        os.chmod(path, stat.S_IWRITE)
+        f(path)
+
 def compile(directory):
     generated_dir = os.path.join(directory, "generated")
-    shutil.rmtree(generated_dir, ignore_errors=True)
+    if os.path.exists(generated_dir):
+        shutil.rmtree(generated_dir, onerror=make_writeable)
+    Path(generated_dir).mkdir()
 
     compile_result = subprocess.run(
         [
             "javac",
             *(find_files_root(directory, "java")),
-            f"utils{seperator}Test.java",
+            os.path.join("utils", "Test.java"),
             "-d",
             generated_dir,
         ],
@@ -58,7 +64,8 @@ def compile(directory):
 def decompile(dir):
     generated_dir = os.path.join(dir, "generated")
     decompiled_dir = os.path.join(dir, "decompiled")
-    shutil.rmtree(decompiled_dir, ignore_errors=True)
+    if os.path.exists(decompiled_dir):
+        shutil.rmtree(decompiled_dir, onerror=make_writeable)
     Path(decompiled_dir).mkdir()
 
     for _, file_dir, file in find_files(generated_dir, "class"):
@@ -69,7 +76,7 @@ def decompile(dir):
         filename = os.path.splitext(file)[0]
         to_dir = os.path.join(dest_dir, filename + ".json")
         
-        jvm2json = subprocess.run([f"utils{seperator}jvm2json", "-s", from_dir , "-t", to_dir], shell = True)
+        jvm2json = subprocess.run([os.path.join("utils", "jvm2json"),  "-s", from_dir , "-t", to_dir], shell = True)
 
         if jvm2json.returncode == 0:
             # print(f"Decompiled {file} to json")
@@ -102,10 +109,9 @@ def watch_codebase():
 
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Java to JSON')
     parser.add_argument('-w', dest='watch_codebase', action='store_const', const=True, default=False, help='Watch the codebase for changes and automatically recompile and decompile')
     args = parser.parse_args()
-    # print(args.watch_codebase)
     if args.watch_codebase:
         watch_codebase()
     else:
