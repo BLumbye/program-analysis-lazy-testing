@@ -73,6 +73,11 @@ class SavedResult:
     entity_changes_tests: dict[str, list[str]] = field(default_factory=dict)
     tests: dict[str, InterpretResult] = field(default_factory=dict)
 
+    def __init__(self, snapshot: EntitySnapshot):
+        self.entity_changes_tests = {}
+        self.tests = {}
+        self.snapshot = snapshot
+
 @dataclass
 class EntitySnapshot:
     constants: dict[str, int] = field(default_factory=dict) # cached values
@@ -143,6 +148,14 @@ class CodeBase:
     
     def get_class_tests(self, class_name) -> list[object]:
         return self._tests[class_name]
+
+    def all_test_names(self) -> list[str]:
+        test_names = []
+        for c, tests in self.get_tests().items():
+            for t in tests:
+                test_names.append(function_name(c, t["name"]))
+        return test_names
+         
     
     def get_fields(self) -> dict[str, list[object]]:
         return self._fields
