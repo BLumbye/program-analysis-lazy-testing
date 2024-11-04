@@ -20,6 +20,7 @@ def main():
     run_tests(codebase_prev.get_tests().items())
 
     # TODO: highly theoretical save to JSON
+    # TODO: highly theoretical load to JSON
 
     # Incremental test run
     next_snapshot = codebase_snapshot(codebase_next)
@@ -48,9 +49,9 @@ def tests_to_be_rerun(prev: SavedResult, next: EntitySnapshot, diff: SnapshotDif
         tests = prev.entity_changes_tests[constant]
         for test in tests:
             if test not in to_be_run and test not in has_been_evaluated:
-                has_been_evaluated.add(test)
                 if not satisfies_constraints(prev.tests[test], next):
                     to_be_run.add(test)
+                has_been_evaluated.add(test)
     
 if __name__ == '__main__':
     main()

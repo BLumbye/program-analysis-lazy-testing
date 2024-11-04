@@ -36,7 +36,7 @@ class BinaryOp(str, Enum):
     REM = "%"
 
 # Translation Note (Unary):
-# Incr can be stored as add
+# Incr can be stored as add/sub
 # NEG (0 - x)
 # Not once (x == false)
 
@@ -45,7 +45,7 @@ class BinaryExpr:
     left: Expr
     right: Expr
     operator: BinaryOp
-    cache_id: int # a unique id, so we can cache part of the computation 
+    cache_id: int # a unique id [0-n], so we can cache part of the computation 
 
 Expr = BinaryExpr | str # str is a constant_name
 
@@ -96,7 +96,7 @@ class GenericInterpreter:
 class CodeBase:
     # classname -> methodname -> list of methods (they might have different arguments)
     _methods = dict[str, dict[str, list[object]]]
-    # classname -> list of bytecode for methods
+    # classname -> list of bytecode for fields
     _fields = dict[str, list[object]]
     # classname -> list of bytecode for test methods
     _tests = dict[str, list[object]]
