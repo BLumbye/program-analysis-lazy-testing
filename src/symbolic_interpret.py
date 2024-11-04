@@ -1,5 +1,5 @@
 import re
-from common import constant_name, function_name, Expr, BinaryExpr, BinaryOp
+from common import constant_name, function_name, BinaryExpr, BinaryOp, InterpretResult
 from collections import deque
 from typing import override
 from interpreter import SimpleInterpreter, Method
@@ -67,7 +67,7 @@ class SymbolicInterpreter(SimpleInterpreter):
         l.debug(f"  LOCALS: {self.method_stack[-1].locals}")
         l.debug(f"  STACK: {self.method_stack[-1].stack}")
 
-        return self.done
+        return self.done,self.method_stack[-1].linear_constraint_stack,self.cacheID
 
     @override
     def step_get(self, bc):
@@ -152,22 +152,28 @@ class SymbolicInterpreter(SimpleInterpreter):
         match bc["condition"]:
             case "eq":
                 result = value == 0
-                self.method_stack[-1].linear_constraint_stack.append(expr+'==0')
+                new_expr = BinaryExpr(expr,'0',BinaryOp.EQ,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
             case "ne":
                 result = value != 0
-                self.method_stack[-1].linear_constraint_stack.append(expr+'!=0')
+                new_expr = BinaryExpr(expr,'0',BinaryOp.NE,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
             case "lt":
                 result = value < 0
-                self.method_stack[-1].linear_constraint_stack.append(expr+'<0')
+                new_expr = BinaryExpr(expr,'0',BinaryOp.LT,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
             case "ge":
                 result = value >= 0
-                self.method_stack[-1].linear_constraint_stack.append(expr+'>=0')
+                new_expr = BinaryExpr(expr,'0',BinaryOp.GE,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
             case "gt":
                 result = value > 0
-                self.method_stack[-1].linear_constraint_stack.append(expr+'>0')
+                new_expr = BinaryExpr(expr,'0',BinaryOp.GT,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
             case "le":
                 result = value <= 0
-                self.method_stack[-1].linear_constraint_stack.append(expr+'<=0')
+                new_expr = BinaryExpr(expr,'0',BinaryOp.LE,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
             case _:
                 self.done = f"can't handle {
                     bc['condition']!r} for ifz operations"
@@ -175,6 +181,7 @@ class SymbolicInterpreter(SimpleInterpreter):
             self.method_stack[-1].pc = bc["target"]
         else:
             self.method_stack[-1].pc += 1
+        self.cacheID+=1
 
     @override
     def step_if(self, bc):
@@ -185,27 +192,33 @@ class SymbolicInterpreter(SimpleInterpreter):
         match bc["condition"]:
             case "eq":
                 result = value1 == value2
-                self.method_stack[-1].linear_constraint_stack.append(expr2+'=='+expr)
+                new_expr = BinaryExpr(expr2,expr,BinaryOp.EQ,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
                 
             case "ne":
                 result = value1 != value2
-                self.method_stack[-1].linear_constraint_stack.append(expr2+'!='+expr)
+                new_expr = BinaryExpr(expr2,expr,BinaryOp.NE,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
                 
             case "lt":
                 result = value1 < value2
-                self.method_stack[-1].linear_constraint_stack.append(expr2+'<'+expr)
+                new_expr = BinaryExpr(expr2,expr,BinaryOp.LT,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
               
             case "ge":
                 result = value1 >= value2
-                self.method_stack[-1].linear_constraint_stack.append(expr2+'>='+expr)
+                new_expr = BinaryExpr(expr2,expr,BinaryOp.GE,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
 
             case "gt":
                 result = value1 > value2
-                self.method_stack[-1].linear_constraint_stack.append(expr2+'>'+expr)
+                new_expr = BinaryExpr(expr2,expr,BinaryOp.GT,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
         
             case "le":
                 result = value1 <= value2
-                self.method_stack[-1].linear_constraint_stack.append(expr2+'<='+expr)
+                new_expr = BinaryExpr(expr2,expr,BinaryOp.LE,self.cacheID)
+                self.method_stack[-1].linear_constraint_stack.append(new_expr)
             case _:
                 self.done = f"can't handle {
                     bc['condition']!r} for if operations"
@@ -213,6 +226,7 @@ class SymbolicInterpreter(SimpleInterpreter):
             self.method_stack[-1].pc = bc["target"]
         else:
             self.method_stack[-1].pc += 1
+        self.cacheID+=1
     
 if __name__ == "__main__":
         methodid = utils.MethodId.parse(sys.argv[1])
@@ -231,4 +245,7 @@ if __name__ == "__main__":
             method_stack=deque(
                 [ChildMethod(method["code"]["bytecode"], inputs, [], 0)])
         )
-        print(interpreter.interpret())    
+        status, constraints, cache_size = interpreter.interpret()
+        print(status)
+        #return InterpretResult('Test nam', status, None,None,constraints,cache_size)
+           
