@@ -47,7 +47,7 @@ class BinaryExpr:
     right: Expr
     cache_id: int # a unique id [0-n], so we can cache part of the computation 
 
-Expr = BinaryExpr | str # str is a constant_name
+Expr =  BinaryExpr | str # str is a constant_name
 
 # @dataclass
 # class Constraint:
