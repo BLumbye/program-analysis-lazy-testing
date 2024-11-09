@@ -3,9 +3,10 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Optional
 
-from common.common import abs_method_name
+from common.common import abs_method_name, CONST_ASSERTION_DISABLED
 from common.codebase import Codebase
 from common.results import InterpretResult
+from common.binary_expression import *
 
 l.basicConfig(level=l.DEBUG, format="%(message)s")
 
@@ -95,138 +96,113 @@ class SimpleInterpreter:
     # Using recommended hack of just setting false when getting '$assertionsDisabled'.
     # The rest of the operation is not used, so not implemented.
     def step_get(self, bc):
-        if bc["field"]["name"] == "$assertionsDisabled":
-            self.method_stack[-1].stack.append(0)
+        if bc["field"]["name"] == CONST_ASSERTION_DISABLED:
+            self.current_method().stack.append(0)
         else:
             self.done = f"can't handle get operations"
 
     # Missing 'is' and 'notis' conditions (probably meant for isnull and isnonnull, but unclear)
-    def step_if(self, bc):
-        value2 = self.method_stack[-1].stack.pop()
-        value1 = self.method_stack[-1].stack.pop()
-        result = False
-        match bc["condition"]:
-            case "eq":
-                result = value1 == value2
-            case "ne":
-                result = value1 != value2
-            case "lt":
-                result = value1 < value2
-            case "ge":
-                result = value1 >= value2
-            case "gt":
-                result = value1 > value2
-            case "le":
-                result = value1 <= value2
-            case _:
-                self.done = f"can't handle {bc['condition']} for if operations"
-        if result:
-            self.method_stack[-1].pc = bc["target"]
+    def __if(self, bc, inst_name, value1, value2):
+        bc_condition = bc["condition"]
 
-    # As above, missing 'is' and 'notis'
+        if (cond := IF_CONDITION_HANDLERS.get(bc_condition)) is not None:
+            result, _ = cond(value1, value2)
+            if result:
+                self.current_method().pc = bc["target"]
+        else:
+            self.done = f"can't handle {bc_condition!r} for {inst_name} operations"
+
+    def step_if(self, bc):
+        value2 = self.current_method().stack.pop()
+        value1 = self.current_method().stack.pop()
+        self.__if(bc, "if", value1, value2)
+
     def step_ifz(self, bc):
-        value = self.method_stack[-1].stack.pop()
-        result = False
-        match bc["condition"]:
-            case "eq":
-                result = value == 0
-            case "ne":
-                result = value != 0
-            case "lt":
-                result = value < 0
-            case "ge":
-                result = value >= 0
-            case "gt":
-                result = value > 0
-            case "le":
-                result = value <= 0
-            case _:
-                self.done = f"can't handle {bc['condition']} for ifz operations"
-        if result:
-            self.method_stack[-1].pc = bc["target"]
+        value = self.current_method().stack.pop()
+        self.__if(bc, "ifz", value, 0)
 
     # Properly interpreting this requires more knowledge of the class which we don't have.
     def step_new(self, bc):
-        match bc["class"]:
+        _class = bc["class"]
+        match _class:
             case "java/lang/AssertionError":
-                self.method_stack[-1].stack.append(AssertionError())
+                self.current_method().stack.append(AssertionError())
             case _:
-                self.done = f"can't handle {bc['class']!r} for new operations"
+                self.done = f"can't handle {_class!r} for new operations"
 
     def step_dup(self, _):
-        self.method_stack[-1].stack.append(self.method_stack[-1].stack[-1])
+        self.current_method().stack.append(self.current_method().stack[-1])
 
     # Only handles static methods properly
     def step_invoke(self, bc):
-        if bc["access"] == "special":
-            object_ref = self.method_stack[-1].stack.pop()
-        elif bc["access"] == "static":
+        access = bc["access"]
+        if access == "special":
+            object_ref = self.current_method().stack.pop()
+        elif access == "static":
             next_method_class = bc["method"]["ref"]["name"]
             next_method_name = bc["method"]["name"]
             new_method = self.codebase.get_method(next_method_class, next_method_name, [])
+
             locals = deque()
             for arg in bc["method"]["args"]:
-                locals.append(self.method_stack[-1].stack.pop())
-            method = Method(next_method_class, next_method_name, new_method["code"]["bytecode"], locals, [], 0)
+                locals.append(self.current_method().stack.pop())
+
+            method = Method(next_method_class, next_method_name, new_method["code"]["bytecode"], locals, deque(), 0)
             self.method_stack.append(method)
             
             self.method_dependencies.add(abs_method_name(next_method_class, next_method_name))
         else:
-            self.done = f"can't handle {bc['access']!r} for invoke operations"
+            self.done = f"can't handle {access!r} for invoke operations"
 
     def step_throw(self, _):
-        message = self.method_stack[-1].stack[-1].throw()
+        message = self.current_method().stack[-1].throw()
         self.done = message
 
     def step_load(self, bc):
-        value = self.method_stack[-1].locals[bc["index"]]
-        self.method_stack[-1].stack.append(value)
+        value = self.current_method().locals[bc["index"]]
+        self.current_method().stack.append(value)
 
     def step_binary(self, bc):
-        value2 = self.method_stack[-1].stack.pop()
-        value1 = self.method_stack[-1].stack.pop()
-        match bc["operant"]:
-            case "add":
-                self.method_stack[-1].stack.append(value1 + value2)
-            case "sub":
-                self.method_stack[-1].stack.append(value1 - value2)
-            case "mul":
-                self.method_stack[-1].stack.append(value1 * value2)
-            case "div":
-                if value2 == 0:
-                    self.done = "divide by zero"
-                else:
-                    if bc["type"] == "int":
-                        self.method_stack[-1].stack.append(value1 // value2)
-                    else:
-                        self.method_stack[-1].stack.append(value1 / value2)
-            case "rem":
-                if value2 == 0:
-                    self.done = "divide by zero"
-                else:
-                    self.method_stack[-1].stack.append(value1 % value2)
+        value2 = self.current_method().stack.pop()
+        value1 = self.current_method().stack.pop()
+        bc_operant = bc["operant"]
+        
+        if value2 == 0 and bc_operant in ["div", "rem"]:
+            self.done = "divide by zero"
+
+        if (operant := BINARY_OPERATION_HANDLERS.get(bc_operant)) is not None:
+            result, _ = operant(value1, value2)
+            self.current_method().stack.append(result)
+        else:
+            self.done = f"can't handle {bc_operant!r} for binary operations"
 
     def step_goto(self, bc):
-        self.method_stack[-1].pc = bc["target"]
+        self.current_method().pc = bc["target"]
 
     def step_store(self, bc):
-        while (len(self.method_stack[-1].locals) <= bc["index"]):
-            self.method_stack[-1].locals.append(0)
-        self.method_stack[-1].locals[bc["index"]
-                                     ] = self.method_stack[-1].stack.pop()
+        while (len(self.current_method().locals) <= bc["index"]):
+            self.current_method().locals.append(0)
+
+        value = self.current_method().stack.pop()
+        self.current_method().locals[bc["index"]] = value
 
     # Not properly implemented, casting in Loops is only from int to short and does not matter in this case
     def step_cast(self, bc):
         cast_type = bc['to']
-        value = self.stack.pop()
-        new_value: None
-        if cast_type == 'short':
-            new_value = self.int_to_short(value)
-        if cast_type == 'byte':
-            new_value = self.int_to_byte(value)
-        if cast_type == 'char':
-            new_value = chr(value)
-        self.stack.append(new_value)
+        value = self.current_method().stack.pop()
+        new_value = None
+
+        match cast_type:
+            case 'short':
+                new_value = self.int_to_short(value)
+            case 'byte':
+                new_value = self.int_to_byte(value)
+            case 'char':
+                new_value = chr(value)
+            case _:
+                self.done = f"can't handle {cast_type!r} when casting"
+        
+        self.current_method().stack.append(new_value)
 
     @staticmethod
     def int_to_short(value):
@@ -251,13 +227,13 @@ class SimpleInterpreter:
         elif bc["type"] != "int":
             self.done = f"can't handle {bc['type']!r} for newarray operations"
         else:
-            size = self.method_stack[-1].stack.pop()
-            self.method_stack[-1].stack.append([0] * size)
+            size = self.current_method().stack.pop()
+            self.current_method().stack.append([0] * size)
 
     def step_array_store(self, _):
-        value = self.method_stack[-1].stack.pop()
-        index = self.method_stack[-1].stack.pop()
-        array = self.method_stack[-1].stack.pop()
+        value = self.current_method().stack.pop()
+        index = self.current_method().stack.pop()
+        array = self.current_method().stack.pop()
         if array == None:
             self.done = "null pointer"
             return
@@ -267,42 +243,43 @@ class SimpleInterpreter:
         array[index] = value
 
     def step_array_load(self, _):
-        index = self.method_stack[-1].stack.pop()
-        array = self.method_stack[-1].stack.pop()
+        index = self.current_method().stack.pop()
+        array = self.current_method().stack.pop()
         if array == None:
             self.done = "null pointer"
             return
         if index >= len(array):
             self.done = "out of bounds"
             return
-        self.method_stack[-1].stack.append(array[index])
+        self.current_method().stack.append(array[index])
 
     def step_arraylength(self, _):
-        array = self.method_stack[-1].stack.pop()
+        array = self.current_method().stack.pop()
         if array == None:
             self.done = "null pointer"
             return
-        self.method_stack[-1].stack.append(len(array))
+        self.current_method().stack.append(len(array))
 
     def step_incr(self, bc):
-        self.method_stack[-1].locals[bc["index"]] += bc["amount"]
+        self.current_method().locals[bc["index"]] += bc["amount"]
 
     def step_push(self, bc):
         if bc["value"] == None:
-            self.method_stack[-1].stack.append(None)
+            self.current_method().stack.append(None)
         else:
-            self.method_stack[-1].stack.append(bc["value"]["value"])
+            self.current_method().stack.append(bc["value"]["value"])
 
     def step_pop(self, bc):
         for _ in range(bc["words"]):
-            self.method_stack[-1].stack.pop()
+            self.current_method().stack.pop()
 
     def step_return(self, bc):
         if len(self.method_stack) > 1:
             # Method return
             if bc["type"] is not None:
                 self.method_stack[-2].stack.append(
-                    self.method_stack[-1].stack.pop())
+                    self.current_method().stack.pop()
+                )
             self.method_stack.pop()
         else:
             # Program return

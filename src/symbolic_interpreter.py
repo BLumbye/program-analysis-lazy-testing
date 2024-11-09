@@ -73,7 +73,8 @@ class SymbolicInterpreter(SimpleInterpreter):
         while (len(self.current_method().locals) <= bc["index"]):
             self.current_method().locals.append((0, CONST_ZERO))
         
-        self.current_method().locals[bc["index"]] = self.current_method().stack.pop()
+        elem = self.current_method().stack.pop()
+        self.current_method().locals[bc["index"]] = elem
     
     @override
     def step_cast(self, bc):
@@ -93,33 +94,14 @@ class SymbolicInterpreter(SimpleInterpreter):
   
         self.current_method().stack.append((new_value, expr))
 
-    @override
-    def step_ifz(self, bc):
-        value, expr = self.current_method().stack.pop()
-        bc_condition = bc["condition"]
-
-        if (cond := IF_CONDITION_HANDLERS.get(bc_condition)) is not None:
-            result, opr = cond(value, 0)
-            new_expr = BinaryExpr(expr, opr, CONST_ZERO, self.get_cache_id())
-
-            if result:
-                self.current_method().pc = bc["target"]
-            else:
-                new_expr = self.falsify_expr(new_expr)
-
-            self.linear_constraint_stack.append(new_expr)
-        else:
-            self.done = f"can't handle {bc_condition!r} for ifz operations"
-
-    @override
-    def step_if(self, bc):
-        value2, expr2 = self.current_method().stack.pop()
-        value1, expr = self.current_method().stack.pop()
+    def __if(self, bc, inst_name, elem1, elem2):
+        value1, expr1 = elem1
+        value2, expr2 = elem2
         bc_condition = bc["condition"]
         
         if (cond := IF_CONDITION_HANDLERS.get(bc_condition)) is not None:
             result, opr = cond(value1, value2)
-            new_expr = BinaryExpr(expr, opr, expr2, self.get_cache_id())
+            new_expr = BinaryExpr(expr1, opr, expr2, self.get_cache_id())
 
             if result:
                 self.current_method().pc = bc["target"]
@@ -128,17 +110,15 @@ class SymbolicInterpreter(SimpleInterpreter):
                 
             self.linear_constraint_stack.append(new_expr)
         else:
-            self.done = f"can't handle {bc_condition!r} for if operations"
-    
+            self.done = f"can't handle {bc_condition!r} for {inst_name} operations"
+
     @override
-    def step_return(self, bc):
-        if len(self.method_stack) > 1:
-            # Method return
-            if bc["type"] is not None:
-                self.method_stack[-2].stack.append(
-                    self.current_method().stack.pop()
-                )
-            self.method_stack.pop()
-        else:
-            # Program return
-            self.done = "ok"
+    def step_ifz(self, bc):
+        elem = self.current_method().stack.pop()
+        self.__if(bc, "ifz", elem, (0, CONST_ZERO))
+
+    @override
+    def step_if(self, bc):
+        elem2 = self.current_method().stack.pop()
+        elem1 = self.current_method().stack.pop()
+        self.__if(bc, "if", elem1, elem2)
