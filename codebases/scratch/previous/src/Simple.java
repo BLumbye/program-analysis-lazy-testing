@@ -14,7 +14,7 @@ public class Simple {
     }
 
     public static boolean C1() {
-        int x = 0;
+        int x = 1;
         return x > 0 && x < 100;
     }
 

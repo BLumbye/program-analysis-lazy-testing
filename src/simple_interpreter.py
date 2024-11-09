@@ -1,65 +1,78 @@
-#!/usr/bin/env python3
-""" The skeleton for writing an interpreter given the bytecode.
-"""
-
-import logging
+import logging as l
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
-from common import CodeBase
+from common.common import abs_method_name
+from common.codebase import Codebase
+from common.results import InterpretResult
 
-l = logging
-l.basicConfig(level=logging.DEBUG, format="%(message)s")
-
+l.basicConfig(level=l.DEBUG, format="%(message)s")
 
 class AssertionError:
     def throw(self):
         return "assertion error"
 
-
 @dataclass
 class Method:
+    class_name: str
     name: str
     bytecode: list
     locals: list
     stack: deque
-    pc: int
-
+    pc: int = field(default_factory=int)
 
 # Does not have an explicit heap  as we just use the built-in from Python
 @dataclass
 class SimpleInterpreter:
-    codebase: CodeBase
+    codebase: Codebase
     method_stack: deque[Method]
     done: Optional[str] = None
     step_count: int = 0
+    
+    constant_dependencies = set()
+    method_dependencies = set()
+    _next_cache_ID: int = 0
+    linear_constraint_stack = list()
+    
+    def __init__(self, codebase: Codebase, method_stack: deque[Method]):
+        self.codebase = codebase
+        self.method_stack = method_stack
+        self.constant_dependencies = set()
+        self.method_dependencies = set([abs_method_name(m.class_name, m.name) for m in method_stack])
+        self.linear_constraint_stack = []
+
+    def current_method(self) -> Method: 
+        return self.method_stack[-1]
+
+    def debug_step(self, next):
+        l.debug(f"STEP {self.step_count}:")
+        l.debug(f"  PC: {self.current_method().pc} {next}")
+        l.debug(f"  LOCALS: {self.current_method().locals}")
+        l.debug(f"  STACK: {self.current_method().stack}")
 
     def step(self):
-        if self.method_stack[-1].pc >= len(self.method_stack[-1].bytecode):
+        self.step_count += 1
+        
+        if self.current_method().pc >= len(self.current_method().bytecode):
             if len(self.method_stack) > 1:
                 self.method_stack.pop()
             else:
                 self.done = "ok"
-                self.step_count += 1
                 return
 
-        next = self.method_stack[-1].bytecode[self.method_stack[-1].pc]
-        l.debug(f"STEP {self.step_count}:")
-        l.debug(f"  PC: {self.method_stack[-1].pc} {next}")
-        l.debug(f"  LOCALS: {self.method_stack[-1].locals}")
-        l.debug(f"  STACK: {self.method_stack[-1].stack}")
-
+        next = self.current_method().bytecode[self.current_method().pc]
+        self.debug_step(next)
+        
         if fn := getattr(self, "step_" + next["opr"], None):
+            self.current_method().pc += 1
             fn(next)
         else:
-            self.step_count += 1
             raise Exception(f"can't handle {next['opr']!r}")
 
-        self.step_count += 1
-
-    def interpret(self, limit=1000):
-        for i in range(limit):
+    
+    def interpret(self, limit=1000) -> InterpretResult:
+        for _ in range(limit):
             self.step()
             if self.done:
                 break
@@ -67,17 +80,23 @@ class SimpleInterpreter:
             self.done = "*"
 
         l.debug(f"DONE {self.done}")
-        l.debug(f"  LOCALS: {self.method_stack[-1].locals}")
-        l.debug(f"  STACK: {self.method_stack[-1].stack}")
+        l.debug(f"  LOCALS: {self.current_method().locals}")
+        l.debug(f"  STACK: {self.current_method().stack}")
 
-        return self.done
-
+        return InterpretResult(
+            self.current_method().name, 
+            self.done, 
+            list(self.method_dependencies), 
+            list(self.constant_dependencies), 
+            self.linear_constraint_stack, 
+            self._next_cache_ID
+        )
+    
     # Using recommended hack of just setting false when getting '$assertionsDisabled'.
     # The rest of the operation is not used, so not implemented.
     def step_get(self, bc):
         if bc["field"]["name"] == "$assertionsDisabled":
             self.method_stack[-1].stack.append(0)
-            self.method_stack[-1].pc += 1
         else:
             self.done = f"can't handle get operations"
 
@@ -103,8 +122,6 @@ class SimpleInterpreter:
                 self.done = f"can't handle {bc['condition']} for if operations"
         if result:
             self.method_stack[-1].pc = bc["target"]
-        else:
-            self.method_stack[-1].pc += 1
 
     # As above, missing 'is' and 'notis'
     def step_ifz(self, bc):
@@ -127,8 +144,6 @@ class SimpleInterpreter:
                 self.done = f"can't handle {bc['condition']} for ifz operations"
         if result:
             self.method_stack[-1].pc = bc["target"]
-        else:
-            self.method_stack[-1].pc += 1
 
     # Properly interpreting this requires more knowledge of the class which we don't have.
     def step_new(self, bc):
@@ -137,36 +152,35 @@ class SimpleInterpreter:
                 self.method_stack[-1].stack.append(AssertionError())
             case _:
                 self.done = f"can't handle {bc['class']!r} for new operations"
-        self.method_stack[-1].pc += 1
 
-    def step_dup(self, bc):
+    def step_dup(self, _):
         self.method_stack[-1].stack.append(self.method_stack[-1].stack[-1])
-        self.method_stack[-1].pc += 1
 
     # Only handles static methods properly
     def step_invoke(self, bc):
         if bc["access"] == "special":
             object_ref = self.method_stack[-1].stack.pop()
-            self.method_stack[-1].pc += 1
         elif bc["access"] == "static":
-            new_method = self.codebase.get_method(bc["method"]["ref"]["name"], bc["method"]["name"], [])
+            next_method_class = bc["method"]["ref"]["name"]
+            next_method_name = bc["method"]["name"]
+            new_method = self.codebase.get_method(next_method_class, next_method_name, [])
             locals = deque()
             for arg in bc["method"]["args"]:
                 locals.append(self.method_stack[-1].stack.pop())
-            method = Method(bc["method"]["name"], new_method["code"]["bytecode"], locals, [], 0)
+            method = Method(next_method_class, next_method_name, new_method["code"]["bytecode"], locals, [], 0)
             self.method_stack.append(method)
-            self.method_stack[-2].pc += 1
+            
+            self.method_dependencies.add(abs_method_name(next_method_class, next_method_name))
         else:
             self.done = f"can't handle {bc['access']!r} for invoke operations"
 
-    def step_throw(self, bc):
+    def step_throw(self, _):
         message = self.method_stack[-1].stack[-1].throw()
         self.done = message
 
     def step_load(self, bc):
         value = self.method_stack[-1].locals[bc["index"]]
         self.method_stack[-1].stack.append(value)
-        self.method_stack[-1].pc += 1
 
     def step_binary(self, bc):
         value2 = self.method_stack[-1].stack.pop()
@@ -191,7 +205,6 @@ class SimpleInterpreter:
                     self.done = "divide by zero"
                 else:
                     self.method_stack[-1].stack.append(value1 % value2)
-        self.method_stack[-1].pc += 1
 
     def step_goto(self, bc):
         self.method_stack[-1].pc = bc["target"]
@@ -201,7 +214,6 @@ class SimpleInterpreter:
             self.method_stack[-1].locals.append(0)
         self.method_stack[-1].locals[bc["index"]
                                      ] = self.method_stack[-1].stack.pop()
-        self.method_stack[-1].pc += 1
 
     # Not properly implemented, casting in Loops is only from int to short and does not matter in this case
     def step_cast(self, bc):
@@ -215,7 +227,6 @@ class SimpleInterpreter:
         if cast_type == 'char':
             new_value = chr(value)
         self.stack.append(new_value)
-        self.pc += 1
 
     @staticmethod
     def int_to_short(value):
@@ -242,9 +253,8 @@ class SimpleInterpreter:
         else:
             size = self.method_stack[-1].stack.pop()
             self.method_stack[-1].stack.append([0] * size)
-        self.method_stack[-1].pc += 1
 
-    def step_array_store(self, bc):
+    def step_array_store(self, _):
         value = self.method_stack[-1].stack.pop()
         index = self.method_stack[-1].stack.pop()
         array = self.method_stack[-1].stack.pop()
@@ -255,9 +265,8 @@ class SimpleInterpreter:
             self.done = "out of bounds"
             return
         array[index] = value
-        self.method_stack[-1].pc += 1
 
-    def step_array_load(self, bc):
+    def step_array_load(self, _):
         index = self.method_stack[-1].stack.pop()
         array = self.method_stack[-1].stack.pop()
         if array == None:
@@ -267,31 +276,26 @@ class SimpleInterpreter:
             self.done = "out of bounds"
             return
         self.method_stack[-1].stack.append(array[index])
-        self.method_stack[-1].pc += 1
 
-    def step_arraylength(self, bc):
+    def step_arraylength(self, _):
         array = self.method_stack[-1].stack.pop()
         if array == None:
             self.done = "null pointer"
             return
         self.method_stack[-1].stack.append(len(array))
-        self.method_stack[-1].pc += 1
 
     def step_incr(self, bc):
         self.method_stack[-1].locals[bc["index"]] += bc["amount"]
-        self.method_stack[-1].pc += 1
 
     def step_push(self, bc):
         if bc["value"] == None:
             self.method_stack[-1].stack.append(None)
         else:
             self.method_stack[-1].stack.append(bc["value"]["value"])
-        self.method_stack[-1].pc += 1
 
     def step_pop(self, bc):
-        for i in range(bc["words"]):
+        for _ in range(bc["words"]):
             self.method_stack[-1].stack.pop()
-        self.method_stack[-1].pc += 1
 
     def step_return(self, bc):
         if len(self.method_stack) > 1:

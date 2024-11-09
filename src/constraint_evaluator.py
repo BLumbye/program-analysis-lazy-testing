@@ -1,26 +1,17 @@
-import operator
 from typing import Optional
-
-from common import *
-
-BINARY_OP = {
-    BinaryOp.EQ: operator.eq,
-    BinaryOp.NE: operator.ne,
-    BinaryOp.LT: operator.lt,
-    BinaryOp.GE: operator.ge,
-    BinaryOp.GT: operator.gt,
-    BinaryOp.LE: operator.le,
-
-    BinaryOp.ADD: operator.add,
-    BinaryOp.SUB: operator.sub,
-    BinaryOp.MUL: operator.mul,
-    BinaryOp.DIV: operator.floordiv, # as we only support integers
-    BinaryOp.REM: operator.mod,
-}
+from common.results import *
+from common.binary_expression import *
 
 def satisfies_constraints(prev: InterpretResult, next: EntitySnapshot) -> bool:
     cache = [None] * prev.cache_size
-    all(prev.constraints, lambda c: evaluate_expr(c.expr, next.constants, cache))
+    # print(prev.constraints)
+    return all([evaluate_expr(e, next.constants, cache) for e in prev.constraints])
+    # for e in prev.constraints:
+    #     if not evaluate_expr(e, next.constants, cache):
+    #         # print("$$$ failed expression", e)
+    #         return False
+        
+    # return True
 
 def evaluate_expr(e: Expr, constants: dict[str, int], cache: list[Optional[bool | int]]) -> bool | int:
     if type(e) is str:
@@ -32,7 +23,7 @@ def evaluate_expr(e: Expr, constants: dict[str, int], cache: list[Optional[bool 
 def evaluate_binary(e: BinaryExpr, constants: dict[str, int], cache: list[Optional[bool | int]]) -> bool | int:
     if not cache[e.cache_id]:
 
-        if (op := BINARY_OP.get(e.operator)) is not None:
+        if (op := BINARY_OPERATION.get(e.operator)) is not None:
             left = evaluate_expr(e.left, constants, cache)
             right = evaluate_expr(e.right, constants, cache)
             cache[e.cache_id] = op(left, right)

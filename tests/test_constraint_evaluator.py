@@ -1,6 +1,6 @@
 from hypothesis import given, settings
 
-from src.common import *
+from src.common.binary_expression import *
 from src.constraint_evaluator import *
 from constraint_generator import expr_gen
 

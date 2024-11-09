@@ -1,6 +1,7 @@
 from jsonpickle import decode, encode
 from hypothesis import given, settings, strategies as st
 
+from src.common.binary_expression import BinaryOp
 from src.diff_codebase import *
 
 class TestJson:

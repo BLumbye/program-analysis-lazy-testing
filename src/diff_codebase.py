@@ -3,7 +3,9 @@ from dataclasses import dataclass
 import json 
 import hashlib
 
-from common import *
+from common.common import *
+from common.codebase import *
+from common.results import *
 
 @dataclass
 class SnapshotDiff:
@@ -14,7 +16,10 @@ class SnapshotDiff:
         self.changed_methods = set()
         self.changed_constants = set()
 
-def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: object, codebase: CodeBase, visited: set[str]):
+def copy_dict_except(dict, exceptions):
+    return { k:v for k, v in dict.items() if k not in exceptions}
+    
+def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: object, codebase: Codebase, visited: set[str]):
     hash_str = ""
     method_name = curr_method["name"]
     method_bytecode = curr_method["code"]["bytecode"]
@@ -22,7 +27,7 @@ def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: obje
     for inst in method_bytecode:
         match inst["opr"]:
             case "push":
-                const_name = constant_name(str(inst["offset"]), class_name, method_name)
+                const_name = constant_name(inst["offset"], class_name, method_name)
                 snapshot.constants[const_name] = int(inst["value"]["value"]) #TODO: cast value to int
                 
             case "invoke":
@@ -34,12 +39,14 @@ def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: obje
                     if next_name not in visited:
                         visited.add(next_name)
                         method_snapshot(snapshot, class_name, next_method, codebase, visited)
-                hash_str += json.dumps(inst) # TODO: optimize
-                
+                        
+                # The offset might change for unknown reasons, therefore remove it
+                hash_str += json.dumps(copy_dict_except(inst, ["offset"])) # TODO: optimize
             case _:
-                hash_str += json.dumps(inst) # TODO: optimize
+                # The offset might change for unknown reasons, therefore remove it
+                hash_str += json.dumps(copy_dict_except(inst, ["offset"])) # TODO: optimize
 
-    method_name = function_name(class_name, method_name)
+    method_name = abs_method_name(class_name, method_name)
     # md5 is used as a cheap hash function
     snapshot.method_hashes[method_name] = hashlib.md5(hash_str.encode()).hexdigest()
 
@@ -50,7 +57,7 @@ def field_snapshot(snapshot: EntitySnapshot, class_name: str, field: object):
         snapshot.constants[field_name] = int(field["value"]["value"]) #TODO: cast value to int
 
 # Assumes all tests are annotated with @Test
-def codebase_snapshot(codebase: CodeBase) -> EntitySnapshot:
+def codebase_snapshot(codebase: Codebase) -> EntitySnapshot:
     visited = set()
     snapshot = EntitySnapshot()
 

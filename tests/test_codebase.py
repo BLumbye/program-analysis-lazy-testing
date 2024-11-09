@@ -1,4 +1,4 @@
-from src.common import *
+from src.common.codebase import *
 
 def test_code_loads_classes():
     codebase = load_codebase("constant_becomes_equal", True)
