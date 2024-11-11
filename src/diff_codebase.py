@@ -54,7 +54,8 @@ def field_snapshot(snapshot: EntitySnapshot, class_name: str, field: object):
     # ignore fields with synthetic in access (compiler-created fields)
     if "synthetic" not in field["access"]:
         field_name = constant_name(field["name"], class_name)
-        snapshot.constants[field_name] = int(field["value"]["value"]) #TODO: cast value to int
+        field_value = int(field["value"]["value"]) if field["value"] else None #TODO: cast value to int
+        snapshot.constants[field_name] = field_value
 
 # Assumes all tests are annotated with @Test
 def codebase_snapshot(codebase: Codebase) -> EntitySnapshot:
@@ -75,11 +76,11 @@ def diff_snapshots(prev: EntitySnapshot, next: EntitySnapshot) -> SnapshotDiff:
     diff = SnapshotDiff()
 
     for name, value in prev.method_hashes.items():
-        if next.method_hashes[name] != value: 
+        if name not in next.method_hashes or next.method_hashes[name] != value: 
             diff.changed_methods.add(name)
 
     for name, value in prev.constants.items():
-        if next.constants[name] != value: 
+        if name not in next.constants or next.constants[name] != value: 
             diff.changed_constants.add(name)
 
     return diff

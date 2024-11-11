@@ -43,8 +43,8 @@ def run_tests(saved_result: SavedResult, required_tests: set[str], codebase : Co
                 continue
 
             stack = deque([Method(class_name, test["name"], test["code"]["bytecode"], [], deque(), 0)])
-            # result = SimpleInterpreter(codebase, stack).interpret()
-            result = SymbolicInterpreter(codebase, stack).interpret()
+            result = SimpleInterpreter(codebase, stack).interpret()
+            # result = SymbolicInterpreter(codebase, stack).interpret()
             
             saved_result.tests[full_test_name] = result
             for dependency in result.depends_on_methods:
