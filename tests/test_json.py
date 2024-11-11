@@ -17,7 +17,7 @@ class TestJson:
         saved_result.entity_changes_tests = { "x" : "test", "y" : "test" }
         result = InterpretResult(
             "test", "done", 
-            ["x", "y", "z"], ["f", "g", "h"], 
+            ["f", "g", "h"], ["x", "y", "z"], 
             [BinaryExpr(BinaryExpr("x", BinaryOp.ADD, "y", 0), BinaryOp.EQ, BinaryExpr("z", BinaryOp.SUB, "y", 1), 2)],
             2
         )

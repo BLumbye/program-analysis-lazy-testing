@@ -70,7 +70,6 @@ class SimpleInterpreter:
             fn(next)
         else:
             raise Exception(f"can't handle {next['opr']!r}")
-
     
     def interpret(self, limit=1000) -> InterpretResult:
         for _ in range(limit):
