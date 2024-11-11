@@ -29,7 +29,11 @@ def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: obje
             case "push":
                 const_name = constant_name(inst["offset"], class_name, method_name)
                 snapshot.constants[const_name] = int(inst["value"]["value"]) #TODO: cast value to int
-                
+            
+            case "incr":
+                const_name = constant_name(inst["offset"], class_name, method_name)
+                snapshot.constants[const_name] = int(inst["amount"]) #TODO: cast value to int
+            
             case "invoke":
                 if inst["access"] == "static":
                     next_class_name = inst["method"]["ref"]["name"]
@@ -75,11 +79,15 @@ def diff_snapshots(prev: EntitySnapshot, next: EntitySnapshot) -> SnapshotDiff:
     diff = SnapshotDiff()
 
     for name, value in prev.method_hashes.items():
-        if next.method_hashes[name] != value: 
+        if (name not in next.method_hashes.keys() 
+            or next.method_hashes[name] != value):
+
             diff.changed_methods.add(name)
 
     for name, value in prev.constants.items():
-        if next.constants[name] != value: 
+        if (name not in next.constants.keys() 
+            or next.constants[name] != value):
+            
             diff.changed_constants.add(name)
 
     return diff

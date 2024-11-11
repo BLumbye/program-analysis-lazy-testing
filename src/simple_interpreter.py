@@ -175,6 +175,10 @@ class SimpleInterpreter:
         else:
             self.done = f"can't handle {bc_operant!r} for binary operations"
 
+    def step_negate(self, _):
+        value = self.current_method().stack.pop()
+        self.current_method().stack.append(-value)
+
     def step_goto(self, bc):
         self.current_method().pc = bc["target"]
 
