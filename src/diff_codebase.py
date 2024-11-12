@@ -24,14 +24,14 @@ def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: obje
     method_name = curr_method["name"]
     method_bytecode = curr_method["code"]["bytecode"]
     
-    for inst in method_bytecode:
+    for i, inst in enumerate(method_bytecode):
         match inst["opr"]:
             case "push":
-                const_name = constant_name(inst["offset"], class_name, method_name)
+                const_name = constant_name(i, class_name, method_name)
                 snapshot.constants[const_name] = int(inst["value"]["value"]) #TODO: cast value to int
             
             case "incr":
-                const_name = constant_name(inst["offset"], class_name, method_name)
+                const_name = constant_name(i, class_name, method_name)
                 snapshot.constants[const_name] = int(inst["amount"]) #TODO: cast value to int
             
             case "invoke":

@@ -36,8 +36,8 @@ class SymbolicInterpreter(SimpleInterpreter):
             self.done = f"can't handle get operations"
 
     @override
-    def step_push(self,bc):
-        expr = constant_name(bc['offset'], self.current_method().class_name, self.current_method().name)
+    def step_push(self, bc):
+        expr = constant_name(self.current_method().pc - 1, self.current_method().class_name, self.current_method().name)
         self.constant_dependencies.add(expr)
         
         if bc["value"] == None:
@@ -53,7 +53,7 @@ class SymbolicInterpreter(SimpleInterpreter):
     @override
     def step_incr(self, bc):
         value, expr = self.current_method().locals[bc["index"]]
-        amount_expr = constant_name(bc['offset'], self.current_method().class_name, self.current_method().name)
+        amount_expr = constant_name(self.current_method().pc - 1, self.current_method().class_name, self.current_method().name)
         self.constant_dependencies.add(amount_expr)
 
         new_expr = BinaryExpr(expr, BinaryOp.ADD, amount_expr, self.get_cache_id())

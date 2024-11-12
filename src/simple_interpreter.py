@@ -9,6 +9,7 @@ from common.results import InterpretResult
 from common.binary_expression import *
 
 l.basicConfig(level=l.DEBUG, format="%(message)s")
+# l.disable(l.DEBUG)
 
 class AssertionError:
     def throw(self):
