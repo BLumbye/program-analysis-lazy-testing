@@ -22,6 +22,22 @@ Or watch for changes in Java files
 python utils/java2json.py -w
 ```
 
+### Run main
+
+```sh
+python src/main.py {codebase} [dynamic/[symbolic]]
+```
+example:
+```sh
+python src/main.py constant_becomes_equal dynamic
+# or
+python src/main.py constant_becomes_equal
+```
+### Run performance test
+```sh
+python src/perf.py {codebase}
+```
+
 ### Run Tests
 
 ```sh

@@ -7,15 +7,6 @@ from common.common import *
 from common.codebase import *
 from common.results import *
 
-@dataclass
-class SnapshotDiff:
-    changed_methods: set[str]
-    changed_constants: set[str]
-
-    def __init__(self):
-        self.changed_methods = set()
-        self.changed_constants = set()
-
 def copy_dict_except(dict, exceptions):
     return { k:v for k, v in dict.items() if k not in exceptions}
     
@@ -23,17 +14,27 @@ def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: obje
     hash_str = ""
     method_name = curr_method["name"]
     method_bytecode = curr_method["code"]["bytecode"]
+    method_constants = set()
     
     for i, inst in enumerate(method_bytecode):
         match inst["opr"]:
             case "push":
                 const_name = constant_name(i, class_name, method_name)
                 snapshot.constants[const_name] = int(inst["value"]["value"]) #TODO: cast value to int
-            
+                method_constants.add(const_name)
+                hash_str += "push"
+                
             case "incr":
                 const_name = constant_name(i, class_name, method_name)
                 snapshot.constants[const_name] = int(inst["amount"]) #TODO: cast value to int
-            
+                method_constants.add(const_name)
+                hash_str += "incr"
+                
+            case "get":
+                const_name = constant_name(inst["field"]["name"], class_name)
+                method_constants.add(const_name)
+                hash_str += "get"
+                
             case "invoke":
                 if inst["access"] == "static":
                     next_class_name = inst["method"]["ref"]["name"]
@@ -53,6 +54,7 @@ def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: obje
     method_name = abs_method_name(class_name, method_name)
     # md5 is used as a cheap hash function
     snapshot.method_hashes[method_name] = hashlib.md5(hash_str.encode()).hexdigest()
+    snapshot.method_constants[method_name] = method_constants
 
 def field_snapshot(snapshot: EntitySnapshot, class_name: str, field: object):
     # ignore fields with synthetic in access (compiler-created fields)
