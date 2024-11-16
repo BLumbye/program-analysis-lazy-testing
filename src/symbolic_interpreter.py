@@ -25,6 +25,7 @@ class SymbolicInterpreter(SimpleInterpreter):
     
     @override
     def debug_step(self, next):
+        l.Logger.disabled = True
         super().debug_step(next)
         l.debug(f"  LINEAR CONSTRAINT: {self.linear_constraint_stack}")
     

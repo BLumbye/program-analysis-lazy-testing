@@ -4,3 +4,4 @@ watchdog
 pytest==8.3.3
 hypothesis==6.115.6
 jsonpickle==3.3.0
+pandas

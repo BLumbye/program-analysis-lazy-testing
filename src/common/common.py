@@ -8,6 +8,8 @@ CONST_ASSERTION_DISABLED = '$assertionsDisabled'
 # instruction line index (self.current_method().pc - 1) as the variable name
 # if you load a variable from a class the method name is None
 def constant_name(variable_name, class_name, method_name = None):
+    if variable_name == CONST_ASSERTION_DISABLED:
+        return CONST_ASSERTION_DISABLED
     parts = [class_name, method_name, variable_name]
     parts = filter((lambda x: x != None), parts)
     parts = map(str, parts)

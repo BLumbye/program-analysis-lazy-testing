@@ -32,7 +32,7 @@ def timer(fun):
     start = time.perf_counter_ns()
     result = fun()
     end = time.perf_counter_ns()
-    return result, end - start
+    return result, (end - start) / 1000
 
 def eval_codebase(codebase_name: str, use_symbolic_interpreter:bool) -> DeltaResult:
     result = DeltaResult()
@@ -88,7 +88,8 @@ def simple_test(codebase: Codebase, stack: SymbolicInterpreter, snapshot: Entity
     #TODO Binary expressions must support integers.
     for constant_name in snapshot.method_constants[full_test_name]:
         constant_value = snapshot.constants[constant_name]
-        result.constraints.append(BinaryExpr(constant_name, BinaryOp.EQ, constant_value)) # for now we add all constants as dependencies. Which is bad because all tests break without reason
+        result.constraints.append(BinaryExpr(constant_name, BinaryOp.EQ, constant_value, result.cache_size)) # for now we add all constants as dependencies. Which is bad because all tests break without reason
+        result.cache_size += 1
     return result
     
 def tests_to_be_rerun(prev: SavedResult, next: EntitySnapshot, diff: SnapshotDiff) -> set[str]:

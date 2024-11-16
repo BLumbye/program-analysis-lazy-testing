@@ -24,6 +24,13 @@ class Method:
     stack: deque
     pc: int = field(default_factory=int)
 
+# Use dedicated variable to disable logging, because if we rely on l.disable(l.DEBUG) we still pay for creating string
+should_log = False
+
+def set_should_log(v):
+    global should_log
+    should_log = v
+
 # Does not have an explicit heap  as we just use the built-in from Python
 @dataclass
 class SimpleInterpreter:
@@ -36,6 +43,8 @@ class SimpleInterpreter:
     method_dependencies = set()
     _next_cache_ID: int = 0
     linear_constraint_stack = list()
+    
+    
     
     def __init__(self, codebase: Codebase, method_stack: deque[Method]):
         self.codebase = codebase
@@ -64,7 +73,8 @@ class SimpleInterpreter:
                 return
 
         next = self.current_method().bytecode[self.current_method().pc]
-        self.debug_step(next)
+        if should_log:
+            self.debug_step(next)
         
         if fn := getattr(self, "step_" + next["opr"], None):
             self.current_method().pc += 1
@@ -72,7 +82,7 @@ class SimpleInterpreter:
         else:
             raise Exception(f"can't handle {next['opr']!r}")
     
-    def interpret(self, limit=1000) -> InterpretResult:
+    def interpret(self, limit=1000000) -> InterpretResult:
         for _ in range(limit):
             self.step()
             if self.done:
@@ -80,9 +90,10 @@ class SimpleInterpreter:
         else:
             self.done = "*"
 
-        l.debug(f"DONE {self.done}")
-        l.debug(f"  LOCALS: {self.current_method().locals}")
-        l.debug(f"  STACK: {self.current_method().stack}")
+        if should_log:
+            l.debug(f"DONE {self.done}")
+            l.debug(f"  LOCALS: {self.current_method().locals}")
+            l.debug(f"  STACK: {self.current_method().stack}")
 
         return InterpretResult(
             self.current_method().name, 

@@ -40,43 +40,51 @@ class SnapshotDiff:
 # time is stored as nano seconds
 @dataclass
 class DeltaResult:
-    t_prev_codebase: float = None
+    t_prev_codebase: float = 0
     prev_codebase: Codebase = None
-    t_next_codebase: float = None
+    t_next_codebase: float = 0
     next_codebase: Codebase = None
-    t_prev_snapshot: float = None
+    t_prev_snapshot: float = 0
     prev_snapshot: EntitySnapshot = None
-    t_next_snapshot: float = None
+    t_next_snapshot: float = 0
     next_snapshot: EntitySnapshot = None
-    t_prev_saved_result: float = None
+    t_prev_saved_result: float = 0
     prev_saved_result: SavedResult = None
-    t_next_saved_result: float = None
+    t_next_saved_result: float = 0
     next_saved_result: SavedResult = None
-    t_new_tests: float = None
+    t_new_tests: float = 0
     new_tests: set[str] = None
-    t_diff: float = None
+    t_diff: float = 0
     diff: SnapshotDiff = None
     
-    t_save_and_restore: float = None
+    t_save_and_restore: float = 0
 
-    t_run_all_tests: float = None
-    t_run_necessary_tests: float = None
+    t_run_all_tests: float = 0
+    t_run_necessary_tests: float = 0
 
-    def entire_prev_run(self):
+    entire_prev_run: float = field(init=False)
+    entire_next_run: float = field(init=False)
+
+    @property
+    def entire_prev_run(self) -> float:
         return sum([
             self.t_prev_codebase,
             self.t_prev_saved_result,
             self.t_prev_snapshot,
             self.t_run_all_tests
         ])
-    
-    def entire_next_run(self):
+    @entire_prev_run.setter
+    def entire_prev_run(self,_): pass
+    @property
+    def entire_next_run(self) -> float:
         return sum([
             self.t_next_codebase,
             self.t_next_saved_result,
             self.t_next_snapshot,
             self.t_run_necessary_tests
         ])
+    @entire_next_run.setter
+    def entire_next_run(self,_): pass
 
     def times(self):
         return {
@@ -93,4 +101,17 @@ class DeltaResult:
             "t_run_all_tests": self.t_run_all_tests,
             "t_run_necessary_tests": self.t_run_necessary_tests,
         }
+
+    def add_time(self, other):
+        self.t_prev_codebase +=other.t_prev_codebase
+        self.t_next_codebase +=other.t_next_codebase
+        self.t_prev_snapshot +=other.t_prev_snapshot
+        self.t_next_snapshot +=other.t_next_snapshot
+        self.t_prev_saved_result +=other.t_prev_saved_result
+        self.t_next_saved_result +=other.t_next_saved_result
+        self.t_new_tests +=other.t_new_tests
+        self.t_diff +=other.t_diff
+        self.t_save_and_restore +=other.t_save_and_restore
+        self.t_run_all_tests +=other.t_run_all_tests
+        self.t_run_necessary_tests +=other.t_run_necessary_tests
 

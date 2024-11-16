@@ -21,8 +21,8 @@ public class Simple {
     
     public static int C() {
         int c = 0;
-        for (int i = 0; i < SOME_CONSTANT; i++) {
-            c ++;
+        for (int i = 0; i < 1; i++) {
+            c += SOME_CONSTANT;
         }
         return c;
     }
