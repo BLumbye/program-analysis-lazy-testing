@@ -1,6 +1,6 @@
 from typing import Optional
 from common.results import *
-from common.binary_expression import *
+from common.expressions import *
 
 def satisfies_constraints(prev: InterpretResult, next: EntitySnapshot) -> bool:
     cache = [None] * prev.cache_size

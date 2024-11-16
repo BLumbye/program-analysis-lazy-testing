@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from common.binary_expression import BinaryExpr
+from common.expressions import BinaryExpr
 from common.common import CONST_ZERO, CONST_ASSERTION_DISABLED
 from common.codebase import Codebase
 

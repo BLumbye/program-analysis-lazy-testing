@@ -4,11 +4,10 @@ from typing import override
 
 from common.common import CONST_ASSERTION_DISABLED, CONST_ZERO, constant_name
 from common.codebase import *
-from common.binary_expression import *
-from simple_interpreter import SimpleInterpreter, Method
+from common.expressions import *
+from simple_interpreter import SimpleInterpreter, Method, set_should_log
 
 l.basicConfig(level=l.DEBUG, format="%(message)s")
-# l.disable(l.DEBUG)
 
 class SymbolicInterpreter(SimpleInterpreter):
 
@@ -25,7 +24,6 @@ class SymbolicInterpreter(SimpleInterpreter):
     
     @override
     def debug_step(self, next):
-        l.Logger.disabled = True
         super().debug_step(next)
         l.debug(f"  LINEAR CONSTRAINT: {self.linear_constraint_stack}")
     
@@ -141,7 +139,6 @@ class SymbolicInterpreter(SimpleInterpreter):
         elem1 = self.current_method().stack.pop()
         self.__if(bc, "if", elem1, elem2)
 
-
     @override
     def step_newarray(self, bc):
         if bc["dim"] != 1:
@@ -149,54 +146,30 @@ class SymbolicInterpreter(SimpleInterpreter):
         elif bc["type"] != "int":
             self.done = f"can't handle {bc['type']!r} for newarray operations"
         else:
-            size,_ = self.method_stack[-1].stack.pop()
-            expr = constant_name(bc['offset'], self.current_method().class_name, self.current_method().name)
-          #  self.constant_dependencies.add(expr)
-            self.method_stack[-1].stack.append(([0] * size,[expr]*size))
-        self.method_stack[-1].pc += 1
+            size, expr = self.current_method().stack.pop()
+            self.current_method().stack.append(([0] * size, ArrayExpr([CONST_ZERO] * size, expr)))
 
     @override
-    def step_array_store(self, bc):
-        value,expr = self.method_stack[-1].stack.pop()
-        index,_ = self.method_stack[-1].stack.pop()
-        array_value,array_expr = self.method_stack[-1].stack.pop()
-        if array_value == None:
-            self.done = "null pointer"
-            return
-        if index >= len(array_value):
-            self.done = "out of bounds"
+    def step_array_store(self, _):
+        value, expr = self.current_method().stack.pop()
+        index, _ = self.current_method().stack.pop()
+        array_value, array_expr = self.current_method().stack.pop()
+        if not super()._check_array(array_value, index):
             return
         array_value[index] = value
-        array_expr[index] = expr
-        self.method_stack[-1].pc += 1
+        array_expr.array[index] = expr
 
     @override
-    def step_array_load(self, bc):
-        index,_ = self.method_stack[-1].stack.pop()
-        array_value,array_expr = self.method_stack[-1].stack.pop()
-        if array_value == None:
-            self.done = "null pointer"
+    def step_array_load(self, _):
+        index, _ = self.current_method().stack.pop()
+        array_value, array_expr = self.current_method().stack.pop()
+        if not super()._check_array(array_value, index):
             return
-        if index >= len(array_value):
-            self.done = "out of bounds"
-            return
-        self.method_stack[-1].stack.append((array_value[index],array_expr[index]))
-        self.method_stack[-1].pc += 1
+        self.current_method().stack.append((array_value[index], array_expr.array[index]))
 
     @override
-    def step_arraylength(self, bc):
-        array,_ = self.method_stack[-1].stack.pop()
-        if array == None:
-            self.done = "null pointer"
+    def step_arraylength(self, _):
+        array_value, array_expr = self.current_method().stack.pop()
+        if not super()._check_array(array_value, None):
             return
-        expr = constant_name(bc['offset'], self.current_method().class_name, self.current_method().name)
-        self.method_stack[-1].stack.append((len(array),expr))
-        self.method_stack[-1].pc += 1
-
-   
-   
-   
-
-
-
-
+        self.current_method().stack.append((len(array_value), array_expr.size))

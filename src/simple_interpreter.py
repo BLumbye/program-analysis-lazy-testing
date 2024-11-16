@@ -6,10 +6,9 @@ from typing import Optional
 from common.common import abs_method_name, CONST_ASSERTION_DISABLED
 from common.codebase import Codebase
 from common.results import InterpretResult
-from common.binary_expression import *
+from common.expressions import *
 
 l.basicConfig(level=l.DEBUG, format="%(message)s")
-# l.disable(l.DEBUG)
 
 class AssertionError:
     def throw(self):
@@ -43,8 +42,6 @@ class SimpleInterpreter:
     method_dependencies = set()
     _next_cache_ID: int = 0
     linear_constraint_stack = list()
-    
-    
     
     def __init__(self, codebase: Codebase, method_stack: deque[Method]):
         self.codebase = codebase
@@ -246,33 +243,35 @@ class SimpleInterpreter:
             size = self.current_method().stack.pop()
             self.current_method().stack.append([0] * size)
 
+    def _check_array(self, array: Optional[list], index: Optional[int]) -> bool:
+        if array is None:
+            self.done = "null pointer"
+            return False
+        
+        if index is not None and index >= len(array):
+            self.done = "out of bounds"
+            return False
+
+        return True
+
     def step_array_store(self, _):
         value = self.current_method().stack.pop()
         index = self.current_method().stack.pop()
         array = self.current_method().stack.pop()
-        if array == None:
-            self.done = "null pointer"
-            return
-        if index >= len(array):
-            self.done = "out of bounds"
+        if not self._check_array(array, index):
             return
         array[index] = value
 
     def step_array_load(self, _):
         index = self.current_method().stack.pop()
         array = self.current_method().stack.pop()
-        if array == None:
-            self.done = "null pointer"
-            return
-        if index >= len(array):
-            self.done = "out of bounds"
+        if not self._check_array(array, index):
             return
         self.current_method().stack.append(array[index])
 
     def step_arraylength(self, _):
         array = self.current_method().stack.pop()
-        if array == None:
-            self.done = "null pointer"
+        if not self._check_array(array, None):
             return
         self.current_method().stack.append(len(array))
 

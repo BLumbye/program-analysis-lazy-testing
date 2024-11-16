@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from jpamb_utils import *
 from src.common.common import all_file_paths
 from src.common.codebase import Codebase
-from src.common.binary_expression import BinaryExpr
+from src.common.expressions import BinaryExpr
 
 def load_jpamb_suite() -> Codebase:
     bytecode = dict()
