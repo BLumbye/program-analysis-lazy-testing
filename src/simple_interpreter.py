@@ -96,7 +96,7 @@ class SimpleInterpreter:
             l.debug(f"  STACK: {self.current_method().stack}")
 
         return InterpretResult(
-            self.current_method().name, 
+            self.method_stack[0].name, 
             self.done, 
             list(self.method_dependencies), 
             list(self.constant_dependencies), 
