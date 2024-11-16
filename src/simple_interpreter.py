@@ -166,9 +166,10 @@ class SimpleInterpreter:
         value2 = self.current_method().stack.pop()
         value1 = self.current_method().stack.pop()
         bc_operant = bc["operant"]
-        
+
         if value2 == 0 and bc_operant in ["div", "rem"]:
             self.done = "divide by zero"
+            return
 
         if (operant := BINARY_OPERATION_HANDLERS.get(bc_operant)) is not None:
             result, _ = operant(value1, value2)

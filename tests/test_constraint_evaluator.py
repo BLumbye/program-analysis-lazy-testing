@@ -34,6 +34,6 @@ def expr_to_string(e: Expr) -> str:
     return e if type(e) is str else binary_to_string(e)
 
 def binary_to_string(e: BinaryExpr) -> str:
-    if (op := PY_BINARY_OP.get(e.operator)) is not None:
-        return f"({expr_to_string(e.left)} {op} {expr_to_string(e.right)})"
-    raise ValueError(f"Unsupported binary operator: {e.operator}")
+    if (op := PY_BINARY_OP.get(e.operator)) is None:
+        raise ValueError(f"Unsupported binary operator: {e.operator}")
+    return f"({expr_to_string(e.left)} {op} {expr_to_string(e.right)})"

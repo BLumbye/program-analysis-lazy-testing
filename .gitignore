@@ -167,3 +167,5 @@ cython_debug/
 **/saved_result.json
 **/jvm2json
 .DS_Store
+tests/jpamb
+.vscode

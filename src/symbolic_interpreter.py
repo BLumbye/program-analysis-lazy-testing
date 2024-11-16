@@ -69,6 +69,7 @@ class SymbolicInterpreter(SimpleInterpreter):
             # If we fail the same way, don't run again
             self.linear_constraint_stack.append(BinaryExpr(value2, BinaryOp.EQ, CONST_ZERO, self.get_cache_id()))
             self.done = "divide by zero"
+            return
 
         if (operant := BINARY_OPERATION_HANDLERS.get(bc_operant)) is not None:
             result, opr = operant(value1, value2)

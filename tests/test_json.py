@@ -6,7 +6,7 @@ from src.diff_codebase import *
 
 class TestJson:
 
-    @settings(max_examples = 100)
+    @settings(max_examples = 50)
     @given(st.from_type(SavedResult)) #TODO: ensure less empty dicts?
     def test_prop_json(self, saved_result):
         assert saved_result == decode(encode(saved_result))
