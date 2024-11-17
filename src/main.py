@@ -122,5 +122,5 @@ def save_and_restore(codebase_path, prev_saved_result):
     with open(json_path, "r") as file:
         return decode(file.read())
 
-    if __name__ == '__main__':
-        main()
+if __name__ == '__main__':
+    main()

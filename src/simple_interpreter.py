@@ -41,14 +41,15 @@ class SimpleInterpreter:
     constant_dependencies = set()
     method_dependencies = set()
     _next_cache_ID: int = 0
-    linear_constraint_stack = list()
+    _cache_size: int = 0
+    _constraints = list()
     
     def __init__(self, codebase: Codebase, method_stack: deque[Method]):
         self.codebase = codebase
         self.method_stack = method_stack
         self.constant_dependencies = set()
         self.method_dependencies = set([abs_method_name(m.class_name, m.name) for m in method_stack])
-        self.linear_constraint_stack = []
+        self._constraints = []
 
     def current_method(self) -> Method: 
         return self.method_stack[-1]
@@ -97,8 +98,8 @@ class SimpleInterpreter:
             self.done, 
             list(self.method_dependencies), 
             list(self.constant_dependencies), 
-            self.linear_constraint_stack, 
-            self._next_cache_ID
+            self._constraints, 
+            self._cache_size
         )
     
     # Using recommended hack of just setting false when getting '$assertionsDisabled'.

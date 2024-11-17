@@ -1,7 +1,7 @@
 from hypothesis import given, settings
 
-from src.common.expressions import *
-from src.constraint_evaluator import *
+from common.expressions import *
+from constraint_evaluator import *
 from constraint_generator import expr_gen
 
 class TestConstraintEvaluator:

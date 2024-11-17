@@ -1,8 +1,8 @@
 import pytest
 from jpamb_util import *
 from collections import deque
-from src.common.codebase import Codebase
-from src.simple_interpreter import SimpleInterpreter, Method
+from common.codebase import Codebase
+from simple_interpreter import SimpleInterpreter, Method
 
 class TestSimpleInterpreter:
 

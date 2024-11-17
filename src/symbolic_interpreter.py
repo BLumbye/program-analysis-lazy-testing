@@ -13,11 +13,16 @@ class SymbolicInterpreter(SimpleInterpreter):
 
     def __init__(self, codebase: Codebase, method_stack: deque[Method]):
         super().__init__(codebase, method_stack)  # Pass required args to SimpleInterpreter
+        # set_should_log(True)
 
     def get_cache_id(self) -> int:
         cache_id = self._next_cache_ID 
         self._next_cache_ID += 1
         return cache_id
+    
+    def add_constraint(self, expr) -> None:
+        self._cache_size = max(self._cache_size, expr.cache_id + 1)
+        self._constraints.append(expr)
 
     def falsify_expr(self, e: BinaryExpr) -> BinaryExpr:
         return BinaryExpr(e, BinaryOp.EQ, CONST_ZERO, self.get_cache_id())
@@ -25,7 +30,8 @@ class SymbolicInterpreter(SimpleInterpreter):
     @override
     def debug_step(self, next):
         super().debug_step(next)
-        l.debug(f"  LINEAR CONSTRAINT: {self.linear_constraint_stack}")
+        l.debug(f"  CONSTRAINTS: {self._constraints}")
+        l.debug(f"  NEXT CACHE ID: {self._next_cache_ID}")
     
     @override
     def step_get(self, bc):
@@ -66,7 +72,7 @@ class SymbolicInterpreter(SimpleInterpreter):
 
         if value2 == 0 and bc_operant in ["div", "rem"]:
             # If we fail the same way, don't run again
-            self.linear_constraint_stack.append(BinaryExpr(value2, BinaryOp.EQ, CONST_ZERO, self.get_cache_id()))
+            self.add_constraint(BinaryExpr(expr2, BinaryOp.EQ, CONST_ZERO, self.get_cache_id()))
             self.done = "divide by zero"
             return
 
@@ -124,7 +130,7 @@ class SymbolicInterpreter(SimpleInterpreter):
             else:
                 new_expr = self.falsify_expr(new_expr)
                 
-            self.linear_constraint_stack.append(new_expr)
+            self.add_constraint(new_expr)
         else:
             self.done = f"can't handle {bc_condition!r} for {inst_name} operations"
 

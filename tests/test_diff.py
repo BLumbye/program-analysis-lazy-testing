@@ -1,5 +1,5 @@
-from src.common.codebase import *
-from src.diff_codebase import *
+from common.codebase import *
+from diff_codebase import *
 
 #### ----- constant becomes equal ------- 
 def test_find_SOME_CONSTANT():

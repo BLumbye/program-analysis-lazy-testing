@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from enum import Enum
 import operator
 
-@dataclass
+@dataclass(frozen=True, eq=True)
 class BinaryExpr:
     left: Expr
     operator: BinaryOp
