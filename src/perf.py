@@ -27,7 +27,7 @@ def perf():
     for i in range(repetitions):
         result = DeltaResult()
         for codebase in codebases:
-            delta = eval_codebase(codebase, True)
+            delta = eval_codebase(codebase, False)
             result.add_time(delta)
         results.append(result)
     

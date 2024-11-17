@@ -10,7 +10,12 @@ class BinaryExpr:
     right: Expr
     cache_id: int # a unique id [0-n], so we can cache part of the computation 
 
-Expr = BinaryExpr | str # str is a constant_name
+@dataclass
+class ArrayExpr:
+    array: list[Expr]
+    size: Expr
+
+Expr = BinaryExpr | ArrayExpr | str # str is a constant_name
 
 class BinaryOp(str, Enum):
     EQ = "==",

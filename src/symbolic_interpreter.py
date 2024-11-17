@@ -4,11 +4,10 @@ from typing import override
 
 from common.common import CONST_ASSERTION_DISABLED, CONST_ZERO, constant_name
 from common.codebase import *
-from common.binary_expression import *
-from simple_interpreter import SimpleInterpreter, Method
+from common.expressions import *
+from simple_interpreter import SimpleInterpreter, Method, set_should_log
 
 l.basicConfig(level=l.DEBUG, format="%(message)s")
-# l.disable(l.DEBUG)
 
 class SymbolicInterpreter(SimpleInterpreter):
 
@@ -25,7 +24,6 @@ class SymbolicInterpreter(SimpleInterpreter):
     
     @override
     def debug_step(self, next):
-        l.Logger.disabled = True
         super().debug_step(next)
         l.debug(f"  LINEAR CONSTRAINT: {self.linear_constraint_stack}")
     
@@ -140,3 +138,38 @@ class SymbolicInterpreter(SimpleInterpreter):
         elem2 = self.current_method().stack.pop()
         elem1 = self.current_method().stack.pop()
         self.__if(bc, "if", elem1, elem2)
+
+    @override
+    def step_newarray(self, bc):
+        if bc["dim"] != 1:
+            self.done = f"can't handle multi-dimensional arrays"
+        elif bc["type"] != "int":
+            self.done = f"can't handle {bc['type']!r} for newarray operations"
+        else:
+            size, expr = self.current_method().stack.pop()
+            self.current_method().stack.append(([0] * size, ArrayExpr([CONST_ZERO] * size, expr)))
+
+    @override
+    def step_array_store(self, _):
+        value, expr = self.current_method().stack.pop()
+        index, _ = self.current_method().stack.pop()
+        array_value, array_expr = self.current_method().stack.pop()
+        if not super()._check_array(array_value, index):
+            return
+        array_value[index] = value
+        array_expr.array[index] = expr
+
+    @override
+    def step_array_load(self, _):
+        index, _ = self.current_method().stack.pop()
+        array_value, array_expr = self.current_method().stack.pop()
+        if not super()._check_array(array_value, index):
+            return
+        self.current_method().stack.append((array_value[index], array_expr.array[index]))
+
+    @override
+    def step_arraylength(self, _):
+        array_value, array_expr = self.current_method().stack.pop()
+        if not super()._check_array(array_value, None):
+            return
+        self.current_method().stack.append((len(array_value), array_expr.size))

@@ -27,13 +27,17 @@ python utils/java2json.py -w
 ```sh
 python src/main.py {codebase} [dynamic/[symbolic]]
 ```
-example:
+
+Example:
+
 ```sh
 python src/main.py constant_becomes_equal dynamic
 # or
 python src/main.py constant_becomes_equal
 ```
+
 ### Run performance test
+
 ```sh
 python src/perf.py {codebase}
 ```
