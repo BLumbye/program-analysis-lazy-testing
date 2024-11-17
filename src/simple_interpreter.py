@@ -24,7 +24,7 @@ class Method:
     pc: int = field(default_factory=int)
 
 # Use dedicated variable to disable logging, because if we rely on l.disable(l.DEBUG) we still pay for creating string
-should_log = True
+should_log = False
 
 def set_should_log(v):
     global should_log
