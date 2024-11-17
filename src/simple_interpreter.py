@@ -1,3 +1,4 @@
+from copy import deepcopy
 import logging as l
 from collections import deque
 from dataclasses import dataclass, field
@@ -34,6 +35,8 @@ def set_should_log(v):
 @dataclass
 class SimpleInterpreter:
     codebase: Codebase
+    # classname -> fieldname -> value
+    fields: dict[str, dict[str, object]]
     method_stack: deque[Method]
     done: Optional[str] = None
     step_count: int = 0
@@ -49,6 +52,8 @@ class SimpleInterpreter:
         self.method_stack = method_stack
         self.constant_dependencies = set()
         self.method_dependencies = set([abs_method_name(m.class_name, m.name) for m in method_stack])
+        self.linear_constraint_stack = []
+        self.fields = deepcopy(codebase.get_fields())
         self._constraints = []
 
     def current_method(self) -> Method: 
@@ -56,6 +61,7 @@ class SimpleInterpreter:
 
     def debug_step(self, next):
         l.debug(f"STEP {self.step_count}:")
+        l.debug(f"  METHOD: {self.current_method().class_name}.{self.current_method().name}")
         l.debug(f"  PC: {self.current_method().pc} {next}")
         l.debug(f"  LOCALS: {self.current_method().locals}")
         l.debug(f"  STACK: {self.current_method().stack}")
@@ -101,13 +107,22 @@ class SimpleInterpreter:
             self._cache_size
         )
     
-    # Using recommended hack of just setting false when getting '$assertionsDisabled'.
-    # The rest of the operation is not used, so not implemented.
     def step_get(self, bc):
-        if bc["field"]["name"] == CONST_ASSERTION_DISABLED:
-            self.current_method().stack.append(0)
-        else:
-            self.done = f"can't handle get operations"
+        # Getting a static field from another class inside <clinit> is not allowed
+        if self.current_method().name == "<clinit>" and bc["field"]["class"] != self.current_method().class_name:
+            self.done = "field initialization must not reference other classes"
+            return
+        if not bc["static"]:
+            self.done = "non-static fields not implemented"
+            return
+        self.current_method().stack.append(self.fields[bc["field"]["class"]][bc["field"]["name"]])
+        self.constant_dependencies.add(constant_name(bc["field"]["name"], bc["field"]["class"]))
+
+    def step_put(self, bc):
+        if not bc["static"]:
+            self.done = "non-static fields not implemented"
+            return
+        self.fields[bc["field"]["class"]][bc["field"]["name"]] = self.current_method().stack.pop()
 
     # Missing 'is' and 'notis' conditions (probably meant for isnull and isnonnull, but unclear)
     def __if(self, bc, inst_name, value1, value2):
@@ -144,7 +159,11 @@ class SimpleInterpreter:
     # Only handles static methods properly
     def step_invoke(self, bc):
         access = bc["access"]
-        if access == "special":
+        if bc["method"]["ref"]["name"] == "java/lang/Class" and bc["method"]["name"] == "desiredAssertionStatus":
+            # We always want assertions to be enabled
+            self.current_method().stack.pop()
+            self.current_method().stack.append(1)
+        elif access == "special":
             object_ref = self.current_method().stack.pop()
         elif access == "static":
             next_method_class = bc["method"]["ref"]["name"]
