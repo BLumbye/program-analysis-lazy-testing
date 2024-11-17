@@ -5,6 +5,7 @@ import stat
 import shutil
 from pathlib import Path
 import argparse
+import platform
 
 def main():
     print("Start compiling...")
@@ -41,17 +42,22 @@ def make_writeable(f, path, _):
 def compile(directory):
     generated_dir = os.path.join(directory, "generated")
     if os.path.exists(generated_dir):
-        shutil.rmtree(generated_dir, onerror=make_writeable)
+        shutil.rmtree(generated_dir, onexc=make_writeable)
     Path(generated_dir).mkdir()
-
-    compile_result = subprocess.run(
-        [
+    
+    args = [
             "javac",
             *(find_files_root(directory, "java")),
             os.path.join("utils", "Test.java"),
             "-d",
             generated_dir,
-        ],
+        ]
+    
+    if platform.system() == "Darwin":
+        args = [" ".join(args)]
+
+    compile_result = subprocess.run(
+        args,
         shell=True,
     )
 
@@ -65,7 +71,7 @@ def decompile(dir):
     generated_dir = os.path.join(dir, "generated")
     decompiled_dir = os.path.join(dir, "decompiled")
     if os.path.exists(decompiled_dir):
-        shutil.rmtree(decompiled_dir, onerror=make_writeable)
+        shutil.rmtree(decompiled_dir, onexc=make_writeable)
     Path(decompiled_dir).mkdir()
 
     for _, file_dir, file in find_files(generated_dir, "class"):
@@ -75,8 +81,13 @@ def decompile(dir):
         Path(dest_dir).mkdir(exist_ok=True, parents=True)
         filename = os.path.splitext(file)[0]
         to_dir = os.path.join(dest_dir, filename + ".json")
+
+        args = [os.path.join("utils", "jvm2json"),  "-s", from_dir , "-t", to_dir]
+
+        if platform.system() == "Darwin":
+            args = [" ".join(args)]
         
-        jvm2json = subprocess.run([os.path.join("utils", "jvm2json"),  "-s", from_dir , "-t", to_dir], shell = True)
+        jvm2json = subprocess.run(args, shell = True)
 
         if jvm2json.returncode == 0:
             # print(f"Decompiled {file} to json")

@@ -165,3 +165,7 @@ cython_debug/
 **/decompiled/*
 **/jvm2json.exe
 **/saved_result.json
+**/jvm2json
+.DS_Store
+tests/jpamb
+.vscode

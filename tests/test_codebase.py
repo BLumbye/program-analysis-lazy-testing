@@ -1,4 +1,4 @@
-from src.common.codebase import *
+from common.codebase import *
 
 def test_code_loads_classes():
     codebase = load_codebase("constant_becomes_equal", True)
@@ -11,4 +11,3 @@ def test_find_simple_test():
 def test_find_method_A():
     codebase = load_codebase("constant_becomes_equal", True)
     assert codebase.get_method("Simple", "A", [])
-

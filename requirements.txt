@@ -1,6 +1,7 @@
-jpamb_utils @ git+https://github.com/kalhauge/jpamb.git@61890b5e185f9d6573f65cb9c98731316714fe26
+jpamb_utils @ git+https://github.com/kalhauge/jpamb.git@674642438f129ab0a2920571553963d2afb724d9
 loguru==0.7.2
 watchdog
 pytest==8.3.3
 hypothesis==6.115.6
 jsonpickle==3.3.0
+pandas==2.2.3

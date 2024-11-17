@@ -7,7 +7,7 @@ from typing import Optional
 from common.common import abs_method_name, CONST_ASSERTION_DISABLED, constant_name
 from common.codebase import Codebase
 from common.results import InterpretResult
-from common.binary_expression import *
+from common.expressions import *
 
 l.basicConfig(level=l.DEBUG, format="%(message)s")
 
@@ -24,6 +24,13 @@ class Method:
     stack: deque
     pc: int = field(default_factory=int)
 
+# Use dedicated variable to disable logging, because if we rely on l.disable(l.DEBUG) we still pay for creating string
+should_log = False
+
+def set_should_log(v):
+    global should_log
+    should_log = v
+
 # Does not have an explicit heap  as we just use the built-in from Python
 @dataclass
 class SimpleInterpreter:
@@ -37,7 +44,8 @@ class SimpleInterpreter:
     constant_dependencies = set()
     method_dependencies = set()
     _next_cache_ID: int = 0
-    linear_constraint_stack = list()
+    _cache_size: int = 0
+    _constraints = list()
     
     def __init__(self, codebase: Codebase, method_stack: deque[Method]):
         self.codebase = codebase
@@ -46,6 +54,7 @@ class SimpleInterpreter:
         self.method_dependencies = set([abs_method_name(m.class_name, m.name) for m in method_stack])
         self.linear_constraint_stack = []
         self.fields = deepcopy(codebase.get_fields())
+        self._constraints = []
 
     def current_method(self) -> Method: 
         return self.method_stack[-1]
@@ -66,18 +75,17 @@ class SimpleInterpreter:
             else:
                 self.done = "ok"
                 return
-
         next = self.current_method().bytecode[self.current_method().pc]
-        self.debug_step(next)
+        if should_log:
+            self.debug_step(next)
         
         if fn := getattr(self, "step_" + next["opr"], None):
             self.current_method().pc += 1
             fn(next)
         else:
             raise Exception(f"can't handle {next['opr']!r}")
-
     
-    def interpret(self, limit=1000) -> InterpretResult:
+    def interpret(self, limit=1000000) -> InterpretResult:
         for _ in range(limit):
             self.step()
             if self.done:
@@ -85,17 +93,18 @@ class SimpleInterpreter:
         else:
             self.done = "*"
 
-        l.debug(f"DONE {self.done}")
-        l.debug(f"  LOCALS: {self.current_method().locals}")
-        l.debug(f"  STACK: {self.current_method().stack}")
+        if should_log:
+            l.debug(f"DONE {self.done}")
+            l.debug(f"  LOCALS: {self.current_method().locals}")
+            l.debug(f"  STACK: {self.current_method().stack}")
 
         return InterpretResult(
-            self.current_method().name, 
+            self.method_stack[0].name, 
             self.done, 
             list(self.method_dependencies), 
             list(self.constant_dependencies), 
-            self.linear_constraint_stack, 
-            self._next_cache_ID
+            self._constraints, 
+            self._cache_size
         )
     
     def step_get(self, bc):
@@ -184,15 +193,20 @@ class SimpleInterpreter:
         value2 = self.current_method().stack.pop()
         value1 = self.current_method().stack.pop()
         bc_operant = bc["operant"]
-        
+
         if value2 == 0 and bc_operant in ["div", "rem"]:
             self.done = "divide by zero"
+            return
 
         if (operant := BINARY_OPERATION_HANDLERS.get(bc_operant)) is not None:
             result, _ = operant(value1, value2)
             self.current_method().stack.append(result)
         else:
             self.done = f"can't handle {bc_operant!r} for binary operations"
+
+    def step_negate(self, _):
+        value = self.current_method().stack.pop()
+        self.current_method().stack.append(-value)
 
     def step_goto(self, bc):
         self.current_method().pc = bc["target"]
@@ -248,40 +262,48 @@ class SimpleInterpreter:
             size = self.current_method().stack.pop()
             self.current_method().stack.append([0] * size)
 
+    def _check_array(self, array: Optional[list], index: Optional[int]) -> bool:
+        if array is None:
+            self.done = "null pointer"
+            return False
+        
+        if index is not None and index >= len(array):
+            self.done = "out of bounds"
+            return False
+
+        return True
+
     def step_array_store(self, _):
         value = self.current_method().stack.pop()
         index = self.current_method().stack.pop()
         array = self.current_method().stack.pop()
-        if array == None:
-            self.done = "null pointer"
-            return
-        if index >= len(array):
-            self.done = "out of bounds"
+        if not self._check_array(array, index):
             return
         array[index] = value
 
     def step_array_load(self, _):
         index = self.current_method().stack.pop()
         array = self.current_method().stack.pop()
-        if array == None:
-            self.done = "null pointer"
-            return
-        if index >= len(array):
-            self.done = "out of bounds"
+        if not self._check_array(array, index):
             return
         self.current_method().stack.append(array[index])
 
     def step_arraylength(self, _):
         array = self.current_method().stack.pop()
-        if array == None:
-            self.done = "null pointer"
+        if not self._check_array(array, None):
             return
         self.current_method().stack.append(len(array))
 
     def step_incr(self, bc):
+        amount_expr = constant_name(self.current_method().pc - 1, self.current_method().class_name, self.current_method().name)
+        self.constant_dependencies.add(amount_expr)
+        
         self.current_method().locals[bc["index"]] += bc["amount"]
 
     def step_push(self, bc):
+        expr = constant_name(self.current_method().pc - 1, self.current_method().class_name, self.current_method().name)
+        self.constant_dependencies.add(expr)
+        
         if bc["value"] == None:
             self.current_method().stack.append(None)
         else:

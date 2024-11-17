@@ -1,6 +1,6 @@
 from hypothesis import strategies as st
 import keyword
-from src.common.binary_expression import *
+from common.expressions import *
 
 int_gen = st.integers(-1000, 1000)
 

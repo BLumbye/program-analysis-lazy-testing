@@ -96,3 +96,8 @@ def load_decompiled(codebase_dir: str, is_next: bool) -> Codebase:
 
 def load_codebase(codebase: str, is_next: bool) -> Codebase:
     return load_decompiled(code_base_path(codebase), is_next)
+
+
+def all_codebases() -> list[str]:
+    cb_dir = os.path.join(os.path.dirname(__file__), "..","..", "codebases")
+    return [ cb for cb in os.listdir(cb_dir) ]

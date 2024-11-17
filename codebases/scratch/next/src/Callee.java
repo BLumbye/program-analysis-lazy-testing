@@ -1,7 +1,7 @@
 import utils.*;
 
 public class Callee {
-    @Test(shouldBeRunAgain = true)
+    @Test(shouldRunSymbolic = true)
     public void simpleTest() {
         assert Simple.B() == 42;
     }
