@@ -11,24 +11,24 @@ public class Simple {
         return(n * factorial(n-1));      
     }      
 
-    @Test(shouldBeRunAgain = false)
+    @Test(shouldRunSymbolic = false, shouldRunDynamic = true)
     public void unchanged() {
-        assert factorial(1000) == 42;
+        assert factorial(100) == 42;
     }
 
     
-    @Test(shouldBeRunAgain = false)
+    @Test(shouldRunSymbolic = false, shouldRunDynamic = true)
     public void stillWrongAfterLocalChange() {
-        assert factorial(1000) == 44;
+        assert factorial(100) == 44;
     }
 
-    @Test(shouldBeRunAgain = false)
+    @Test(shouldRunSymbolic = false, shouldRunDynamic = true)
     public void stillWrongAfterStaticVariableChange() {
-        assert factorial(1000) == SOME_CONSTANT;
+        assert factorial(100) == SOME_CONSTANT;
     }
     
-    @Test(shouldBeRunAgain = true)
+    @Test(shouldRunSymbolic = true, shouldRunDynamic = true)
     public void mustChange() {
-        assert factorial(500) == 42;
+        assert factorial(50) == 42;
     }
 }

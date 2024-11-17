@@ -10,5 +10,6 @@ import java.lang.reflect.Method;
 // Mark tests
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Test {
-    boolean shouldBeRunAgain() default false;
+    boolean shouldRunSymbolic() default false;
+    boolean shouldRunDynamic() default true;
 }

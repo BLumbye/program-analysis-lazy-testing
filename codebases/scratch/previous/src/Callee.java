@@ -2,7 +2,7 @@ import nested.Simpler;
 import utils.*;
 
 public class Callee {
-    @Test(shouldBeRunAgain = true)
+    @Test(shouldRunSymbolic = true)
     public void simpleTest() {
         assert Simpler.constant() == 42;
     }

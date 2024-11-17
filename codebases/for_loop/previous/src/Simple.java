@@ -11,7 +11,7 @@ public class Simple {
         return x;
     }
 
-    @Test(shouldBeRunAgain = true)
+    @Test(shouldRunSymbolic = true, shouldRunDynamic = true)
     public void simpleTest() {
         assert J(0) == 10;
     }

@@ -57,7 +57,7 @@ public class Simple {
         return x-- == 0;
     }
 
-    @Test(shouldBeRunAgain = true)
+    @Test(shouldRunSymbolic = true)
     public void simpleTest() {
         assert B() == 42;
     }

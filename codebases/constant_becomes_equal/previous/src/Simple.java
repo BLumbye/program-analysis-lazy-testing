@@ -13,7 +13,7 @@ public class Simple {
         return SOME_CONSTANT;
     }
 
-    @Test(shouldBeRunAgain = true)
+    @Test(shouldRunSymbolic = true, shouldRunDynamic = true)
     public void simpleTest() {
         assert B() == 42;
     }
