@@ -9,12 +9,12 @@ public class Simple {
     }
     
 
-    @Test(shouldBeRunAgain = true)
+    @Test(shouldRunSymbolic = true, shouldRunDynamic = true)
     public void testOnlyChangesInlineConstants() {
         assert B() == 43;
     }
 
-    @Test(shouldBeRunAgain = false)
+    @Test(shouldRunSymbolic = true, shouldRunDynamic = true)
     public void testChangesImplementation() {
         assert (B() / 2 * 2) == 42;
     }
@@ -27,7 +27,7 @@ public class Simple {
         return c;
     }
 
-    @Test(shouldBeRunAgain = true)
+    @Test(shouldRunSymbolic = true, shouldRunDynamic = true)
     public void testDependencyChangesImplementation() {
         assert C() == 42;
     }

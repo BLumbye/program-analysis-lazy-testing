@@ -6,7 +6,7 @@ import logging as l
 
 from diff_codebase import *
 from constraint_evaluator import *
-from simple_interpreter import SimpleInterpreter, Method, set_should_log
+from simple_interpreter import set_should_log
 from main import eval_codebase
 from symbolic_interpreter import SymbolicInterpreter
 import pandas as pd
@@ -22,12 +22,12 @@ def perf():
         codebases = all_codebases()
 
     set_should_log(False)
-    repetitions = 1000
+    repetitions = 500
     results = []
     for i in range(repetitions):
         result = DeltaResult()
         for codebase in codebases:
-            delta = eval_codebase(codebase, False)
+            delta = eval_codebase(codebase, True)
             result.add_time(delta)
         results.append(result)
     

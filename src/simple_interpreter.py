@@ -3,7 +3,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Optional
 
-from common.common import abs_method_name, CONST_ASSERTION_DISABLED
+from common.common import abs_method_name, CONST_ASSERTION_DISABLED, constant_name
 from common.codebase import Codebase
 from common.results import InterpretResult
 from common.binary_expression import *
@@ -25,7 +25,7 @@ class Method:
     pc: int = field(default_factory=int)
 
 # Use dedicated variable to disable logging, because if we rely on l.disable(l.DEBUG) we still pay for creating string
-should_log = False
+should_log = True
 
 def set_should_log(v):
     global should_log
@@ -43,7 +43,6 @@ class SimpleInterpreter:
     method_dependencies = set()
     _next_cache_ID: int = 0
     linear_constraint_stack = list()
-    
     
     
     def __init__(self, codebase: Codebase, method_stack: deque[Method]):
@@ -71,7 +70,6 @@ class SimpleInterpreter:
             else:
                 self.done = "ok"
                 return
-
         next = self.current_method().bytecode[self.current_method().pc]
         if should_log:
             self.debug_step(next)
@@ -277,9 +275,15 @@ class SimpleInterpreter:
         self.current_method().stack.append(len(array))
 
     def step_incr(self, bc):
+        amount_expr = constant_name(self.current_method().pc - 1, self.current_method().class_name, self.current_method().name)
+        self.constant_dependencies.add(amount_expr)
+        
         self.current_method().locals[bc["index"]] += bc["amount"]
 
     def step_push(self, bc):
+        expr = constant_name(self.current_method().pc - 1, self.current_method().class_name, self.current_method().name)
+        self.constant_dependencies.add(expr)
+        
         if bc["value"] == None:
             self.current_method().stack.append(None)
         else:

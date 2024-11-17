@@ -5,7 +5,7 @@ import time
 
 from diff_codebase import *
 from constraint_evaluator import *
-from simple_interpreter import SimpleInterpreter, Method
+from simple_interpreter import SimpleInterpreter, Method, set_should_log
 from symbolic_interpreter import SymbolicInterpreter
 
 def main():
@@ -35,6 +35,7 @@ def timer(fun):
     return result, (end - start) / 1000
 
 def eval_codebase(codebase_name: str, use_symbolic_interpreter:bool) -> DeltaResult:
+    sys.setrecursionlimit(10000000) # handle issues related to recursion limit
     result = DeltaResult()
 
     # Load codebase before and after a change
@@ -82,11 +83,8 @@ def run_tests(saved_result: SavedResult, required_tests: set[str], codebase : Co
 
 def simple_test(codebase: Codebase, stack: SymbolicInterpreter, snapshot: EntitySnapshot, full_test_name: str) -> InterpretResult:
     result = SimpleInterpreter(codebase, stack).interpret()
-    # Problem: at the moment the SimpleInterpreter does not track the constants it interacts with, which is a problem if it depends on a static variable that changes values.
-    # Because the SimpleInterpreter only sees changes to the actual method. Furthermore it does not see changes to constants inside the method.
-    #TODO this test should only depend on the constant it interacts with, currently it depends on all used variables in the program
-    #TODO Binary expressions must support integers.
-    for constant_name in snapshot.method_constants[full_test_name]:
+    # Problem: We have to track the variables we interact with, because constants are not part of the method hash
+    for constant_name in result.depends_on_constants:
         constant_value = snapshot.constants[constant_name]
         result.constraints.append(BinaryExpr(constant_name, BinaryOp.EQ, constant_value, result.cache_size)) # for now we add all constants as dependencies. Which is bad because all tests break without reason
         result.cache_size += 1
@@ -111,7 +109,6 @@ def tests_to_be_rerun(prev: SavedResult, next: EntitySnapshot, diff: SnapshotDif
                     if not satisfies_constraints(prev.tests[test], next):
                         to_be_run.add(test)
                     has_been_evaluated.add(test)
-
     return to_be_run
 
 def save_and_restore(codebase_path, prev_saved_result):
@@ -122,5 +119,5 @@ def save_and_restore(codebase_path, prev_saved_result):
     with open(json_path, "r") as file:
         return decode(file.read())
 
-    if __name__ == '__main__':
-        main()
+if __name__ == '__main__':
+    main()
