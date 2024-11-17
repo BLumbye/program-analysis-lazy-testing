@@ -1,9 +1,10 @@
+from copy import deepcopy
 import logging as l
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Optional
 
-from common.common import abs_method_name, CONST_ASSERTION_DISABLED
+from common.common import abs_method_name, CONST_ASSERTION_DISABLED, constant_name
 from common.codebase import Codebase
 from common.results import InterpretResult
 from common.binary_expression import *
@@ -44,20 +45,7 @@ class SimpleInterpreter:
         self.constant_dependencies = set()
         self.method_dependencies = set([abs_method_name(m.class_name, m.name) for m in method_stack])
         self.linear_constraint_stack = []
-        self.fields = {}
-        # Initialize fields
-        for class_name, fields in codebase.get_fields().items():
-            self.fields[class_name] = {}
-            for field in fields:
-                # self.fields[class_name][field["name"]] = field.setdefault("value", {}).get("value", None)
-                self.fields[class_name][field["name"]] = field["value"]["value"] if field["value"] else None
-        # Prepend <clinit> for all classes to the method stack
-        for class_name in codebase.get_class_names():
-            if "<clinit>" not in codebase.get_class_methods(class_name):
-                continue
-            clinit_bytecode = codebase.get_method(class_name, "<clinit>", [])["code"]["bytecode"]
-            self.method_stack.append(Method(class_name, "<clinit>", clinit_bytecode, [], [], 0))
-
+        self.fields = deepcopy(codebase.get_fields())
 
     def current_method(self) -> Method: 
         return self.method_stack[-1]
@@ -119,6 +107,7 @@ class SimpleInterpreter:
             self.done = "non-static fields not implemented"
             return
         self.current_method().stack.append(self.fields[bc["field"]["class"]][bc["field"]["name"]])
+        self.constant_dependencies.add(constant_name(bc["field"]["name"], bc["field"]["class"]))
 
     def step_put(self, bc):
         if not bc["static"]:

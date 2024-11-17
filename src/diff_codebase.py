@@ -50,12 +50,9 @@ def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: obje
     # md5 is used as a cheap hash function
     snapshot.method_hashes[method_name] = hashlib.md5(hash_str.encode()).hexdigest()
 
-def field_snapshot(snapshot: EntitySnapshot, class_name: str, field: object):
-    # ignore fields with synthetic in access (compiler-created fields)
-    if "synthetic" not in field["access"]:
-        field_name = constant_name(field["name"], class_name)
-        field_value = int(field["value"]["value"]) if field["value"] else None #TODO: cast value to int
-        snapshot.constants[field_name] = field_value
+def field_snapshot(snapshot: EntitySnapshot, class_name: str, field_name: str, value: object):
+    name = constant_name(field_name, class_name)
+    snapshot.constants[name] = value
 
 # Assumes all tests are annotated with @Test
 def codebase_snapshot(codebase: Codebase) -> EntitySnapshot:
@@ -63,8 +60,8 @@ def codebase_snapshot(codebase: Codebase) -> EntitySnapshot:
     snapshot = EntitySnapshot()
 
     for class_name, fields in codebase.get_fields().items():
-        for field in fields:
-            field_snapshot(snapshot, class_name, field)
+        for field_name, field_value in fields.items():
+            field_snapshot(snapshot, class_name, field_name, field_value)
 
     for class_name, tests in codebase.get_tests().items():
         for test in tests:

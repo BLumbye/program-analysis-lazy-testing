@@ -1,13 +1,15 @@
+from collections import deque
 import os
 import json
 from dataclasses import dataclass
 from common.common import abs_method_name, all_file_paths
+import importlib
 
 # Can both be a next and previous codebase
 @dataclass
 class Codebase:
     # classname -> list of bytecode for fields
-    _fields: dict[str, list[object]]
+    _fields: dict[str, dict[str, object]]
     # classname -> methodname -> list of methods (they might have different arguments)
     _methods: dict[str, dict[str, list[object]]]
     # classname -> list of bytecode for test methods
@@ -24,7 +26,7 @@ class Codebase:
         for class_name, _class in bytecode.items():
             self._methods.setdefault(class_name, {})
             self._tests.setdefault(class_name, [])
-            self._fields[class_name] = _class["fields"]
+            self._fields.setdefault(class_name, {})
 
             for method in _class["methods"]:
                 method_name = method["name"]
@@ -32,8 +34,22 @@ class Codebase:
                 if is_test:
                     self._tests[class_name].append(method)
 
-                self._methods[class_name].setdefault(method_name, []).append(method)            
+                self._methods[class_name].setdefault(method_name, []).append(method)
 
+            # Populate fields initially
+            if "fields" in _class:
+                for field in _class["fields"]:
+                    self._fields[class_name][field["name"]] = field["value"]["value"] if field["value"] else None
+
+        # Run all clinit methods and populate fields if it exists -- importlib is used to avoid circular imports
+        interpreterModule = importlib.import_module("simple_interpreter")
+        clinits = [interpreterModule.Method(class_name, "<clinit>", self.get_method(class_name, "<clinit>", [])["code"]["bytecode"], [], deque(), 0) 
+                   for class_name in self.get_class_names() if "<clinit>" in self.get_class_methods(class_name)]
+        if len(clinits) > 0:
+            interpreter = interpreterModule.SimpleInterpreter(self, deque(clinits))
+            interpreter.interpret() # TODO: Do something here if the interpreter fails
+            self._fields = interpreter.fields
+                
     def get_classes(self) -> dict[str, object]:
         return self.bytecode
     
@@ -56,7 +72,7 @@ class Codebase:
     def get_class_tests(self, class_name) -> list[object]:
         return self._tests[class_name]
 
-    def get_fields(self) -> dict[str, list[object]]:
+    def get_fields(self) -> dict[str, dict[str, object]]:
         return self._fields
     
     def all_test_names(self) -> list[str]:
