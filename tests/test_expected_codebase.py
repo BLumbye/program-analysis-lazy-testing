@@ -15,13 +15,12 @@ def get_expected_test_names(codebase: Codebase, should_run_key:str) -> set[str]:
                 test_names.add(abs_method_name(c, t["name"]))
     return test_names
 
-def codebases_except_scratch_breaking() -> list[str]:
+def codebases_except_scratch() -> list[str]:
     codebases = all_codebases()
     codebases.remove("scratch")
-    codebases.remove("breaking")
     return codebases
 
-@pytest.mark.parametrize("codebase_name", codebases_except_scratch_breaking())
+@pytest.mark.parametrize("codebase_name", codebases_except_scratch())
 def test_codebase_symbolic_reruns(codebase_name: str):
     print("codebase_name", codebase_name)
     set_should_log(False)
@@ -31,7 +30,7 @@ def test_codebase_symbolic_reruns(codebase_name: str):
     print("actual", delta.new_tests)
     assert delta.new_tests == expected_rerun_tests
 
-@pytest.mark.parametrize("codebase_name", codebases_except_scratch_breaking())
+@pytest.mark.parametrize("codebase_name", codebases_except_scratch())
 def test_codebase_dynamic_reruns(codebase_name: str):
     print("codebase_name", codebase_name)
     set_should_log(False)

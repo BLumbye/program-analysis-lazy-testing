@@ -303,11 +303,7 @@ class SimpleInterpreter:
     def step_push(self, bc):
         expr = constant_name(self.current_method().pc - 1, self.current_method().class_name, self.current_method().name)
         self.constant_dependencies.add(expr)
-        
-        if bc["value"] == None:
-            self.current_method().stack.append(None)
-        else:
-            self.current_method().stack.append(bc["value"]["value"])
+        self.current_method().stack.append(bc["value"]["value"] if bc["value"] else None)
 
     def step_pop(self, bc):
         for _ in range(bc["words"]):

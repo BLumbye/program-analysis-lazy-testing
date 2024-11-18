@@ -17,7 +17,7 @@ def expr_gen(draw) -> tuple[Expr, dict[str, int], list[None]]:
     return (draw(pick_node(constants, cache)), constants, cache)
 
 def pick_node(constants: dict[str, int], cache: list[None]):
-    return st.deferred(lambda: # TODO: assign different probabilities
+    return st.deferred(lambda:
           value_generator(constants) 
         | binary_generator(constants, cache)
     )

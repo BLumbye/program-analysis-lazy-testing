@@ -11,6 +11,8 @@ l.basicConfig(level=l.DEBUG, format="%(message)s")
 
 class SymbolicInterpreter(SimpleInterpreter):
 
+    _found_constraints = set()
+
     def __init__(self, codebase: Codebase, method_stack: deque[Method]):
         super().__init__(codebase, method_stack)  # Pass required args to SimpleInterpreter
         # set_should_log(True)
@@ -22,7 +24,10 @@ class SymbolicInterpreter(SimpleInterpreter):
     
     def add_constraint(self, expr) -> None:
         self._cache_size = max(self._cache_size, expr.cache_id + 1)
+        # str_expr = str(expr)
+        # if str_expr not in self._found_constraints:
         self._constraints.append(expr)
+        # self._found_constraints.add(str_expr)
 
     def falsify_expr(self, e: BinaryExpr) -> BinaryExpr:
         return BinaryExpr(e, BinaryOp.EQ, CONST_ZERO, self.get_cache_id())
@@ -44,11 +49,7 @@ class SymbolicInterpreter(SimpleInterpreter):
     def step_push(self, bc):
         expr = constant_name(self.current_method().pc - 1, self.current_method().class_name, self.current_method().name)
         self.constant_dependencies.add(expr)
-        
-        if bc["value"] == None:
-            self.current_method().stack.append((None, expr))
-        else:
-            self.current_method().stack.append((bc["value"]["value"], expr))
+        self.current_method().stack.append((bc["value"]["value"], expr) if bc["value"] else (None, expr))
 
     @override
     def step_load(self, bc):
@@ -115,7 +116,7 @@ class SymbolicInterpreter(SimpleInterpreter):
                 self.done = f"can't handle {cast_type!r} when casting"
   
         self.current_method().stack.append((new_value, expr))
-
+    
     def __if(self, bc, inst_name, elem1, elem2):
         value1, expr1 = elem1
         value2, expr2 = elem2
@@ -153,7 +154,7 @@ class SymbolicInterpreter(SimpleInterpreter):
             self.done = f"can't handle {bc['type']!r} for newarray operations"
         else:
             size, expr = self.current_method().stack.pop()
-            self.current_method().stack.append(([0] * size, ArrayExpr([CONST_ZERO] * size, expr)))
+            self.current_method().stack.append(([0] * size, ArrayExpr(expr, [CONST_ZERO] * size)))
 
     @override
     def step_array_store(self, _):

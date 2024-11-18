@@ -111,7 +111,7 @@ JPAMB_EXPECTED_RESULTS = {
             [], 
             0
         ),
-    3 : ExpectedResult( #TODO: handle null values in diff!
+    3 : ExpectedResult(
             ["jpamb/cases/Arrays:arrayIsNullLength"], 
             [
                 "jpamb/cases/Arrays:arrayIsNullLength:0"
@@ -137,12 +137,12 @@ JPAMB_EXPECTED_RESULTS = {
             ], 
             3
         ),
-    5 : ExpectedResult( #TODO: better array input handling
+    5 : ExpectedResult(
             ["jpamb/cases/Arrays:arrayNotEmpty"], 
             [], 
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
-                BinaryExpr("jpamb/cases/Arrays:arrayNotEmpty:input:a:1", BinaryOp.GT, CONST_ZERO, 2)
+                BinaryExpr("jpamb/cases/Arrays:arrayNotEmpty:input:a:size:1", BinaryOp.GT, CONST_ZERO, 2)
             ], 
             3
         ),
@@ -151,7 +151,7 @@ JPAMB_EXPECTED_RESULTS = {
             [], 
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
-                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arrayNotEmpty:input:a:0", BinaryOp.GT, CONST_ZERO, 2), BinaryOp.EQ, CONST_ZERO, 3)
+                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arrayNotEmpty:input:a:size:0", BinaryOp.GT, CONST_ZERO, 2), BinaryOp.EQ, CONST_ZERO, 3)
             ], 
             4
         ),
@@ -209,11 +209,11 @@ JPAMB_EXPECTED_RESULTS = {
             ], 
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
-                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:104", BinaryOp.NE, "jpamb/cases/Arrays:arraySpellsHello:5", 2), BinaryOp.EQ, CONST_ZERO, 3),
-                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:101", BinaryOp.NE, "jpamb/cases/Arrays:arraySpellsHello:10", 4), BinaryOp.EQ, CONST_ZERO, 5),
-                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:108", BinaryOp.NE, "jpamb/cases/Arrays:arraySpellsHello:15", 6), BinaryOp.EQ, CONST_ZERO, 7),
-                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:108", BinaryOp.NE, "jpamb/cases/Arrays:arraySpellsHello:20", 8), BinaryOp.EQ, CONST_ZERO, 9),
-                BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:111", BinaryOp.EQ, "jpamb/cases/Arrays:arraySpellsHello:25", 10)
+                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:0:104", BinaryOp.NE, "jpamb/cases/Arrays:arraySpellsHello:5", 2), BinaryOp.EQ, CONST_ZERO, 3),
+                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:1:101", BinaryOp.NE, "jpamb/cases/Arrays:arraySpellsHello:10", 4), BinaryOp.EQ, CONST_ZERO, 5),
+                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:2:108", BinaryOp.NE, "jpamb/cases/Arrays:arraySpellsHello:15", 6), BinaryOp.EQ, CONST_ZERO, 7),
+                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:3:108", BinaryOp.NE, "jpamb/cases/Arrays:arraySpellsHello:20", 8), BinaryOp.EQ, CONST_ZERO, 9),
+                BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:4:111", BinaryOp.EQ, "jpamb/cases/Arrays:arraySpellsHello:25", 10)
             ], 
             11
         ),
@@ -225,7 +225,7 @@ JPAMB_EXPECTED_RESULTS = {
             ], 
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
-                BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:120", BinaryOp.NE, "jpamb/cases/Arrays:arraySpellsHello:5", 2),
+                BinaryExpr("jpamb/cases/Arrays:arraySpellsHello:input:a:0:120", BinaryOp.NE, "jpamb/cases/Arrays:arraySpellsHello:5", 2),
             ],
             3
         ),
@@ -248,12 +248,12 @@ JPAMB_EXPECTED_RESULTS = {
                 "jpamb/cases/Arrays:arraySumIsLarge:19"  # 300
             ], 
             [
-                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:2", BinaryOp.GE, "jpamb/cases/Arrays:arraySumIsLarge:input:a:3", 0), BinaryOp.EQ, CONST_ZERO, 1),
-                BinaryExpr(BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:2", BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 3), BinaryOp.GE, "jpamb/cases/Arrays:arraySumIsLarge:input:a:3", 4), BinaryOp.EQ, CONST_ZERO, 5),
-                BinaryExpr(BinaryExpr(BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:2", BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 3), BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 7), BinaryOp.GE, "jpamb/cases/Arrays:arraySumIsLarge:input:a:3", 8), BinaryOp.EQ, CONST_ZERO, 9),
-                BinaryExpr(BinaryExpr(BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:2", BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 3), BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 7), BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 11), BinaryOp.GE, "jpamb/cases/Arrays:arraySumIsLarge:input:a:3", 12),
+                BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:2", BinaryOp.GE, "jpamb/cases/Arrays:arraySumIsLarge:input:a:size:3", 0), BinaryOp.EQ, CONST_ZERO, 1),
+                BinaryExpr(BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:2", BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 3), BinaryOp.GE, "jpamb/cases/Arrays:arraySumIsLarge:input:a:size:3", 4), BinaryOp.EQ, CONST_ZERO, 5),
+                BinaryExpr(BinaryExpr(BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:2", BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 3), BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 7), BinaryOp.GE, "jpamb/cases/Arrays:arraySumIsLarge:input:a:size:3", 8), BinaryOp.EQ, CONST_ZERO, 9),
+                BinaryExpr(BinaryExpr(BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:2", BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 3), BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 7), BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:14", 11), BinaryOp.GE, "jpamb/cases/Arrays:arraySumIsLarge:input:a:size:3", 12),
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 13), BinaryOp.EQ, CONST_ZERO, 14),
-                BinaryExpr(BinaryExpr(BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:0", BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:input:a:50", 2), BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:input:a:100", 6), BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:input:a:200", 10), BinaryOp.GT, "jpamb/cases/Arrays:arraySumIsLarge:19", 15)
+                BinaryExpr(BinaryExpr(BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:0", BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:input:a:0:50", 2), BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:input:a:1:100", 6), BinaryOp.ADD, "jpamb/cases/Arrays:arraySumIsLarge:input:a:2:200", 10), BinaryOp.GT, "jpamb/cases/Arrays:arraySumIsLarge:19", 15)
             ], 
             16
         ),
@@ -265,7 +265,7 @@ JPAMB_EXPECTED_RESULTS = {
                 "jpamb/cases/Arrays:arraySumIsLarge:19" # 300
             ],
             [
-                BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:2", BinaryOp.GE, "jpamb/cases/Arrays:arraySumIsLarge:input:a:0", 0),
+                BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:2", BinaryOp.GE, "jpamb/cases/Arrays:arraySumIsLarge:input:a:size:0", 0),
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 1), BinaryOp.EQ, CONST_ZERO, 2),
                 BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arraySumIsLarge:0", BinaryOp.GT, "jpamb/cases/Arrays:arraySumIsLarge:19", 3), BinaryOp.EQ, CONST_ZERO, 4)
             ], 

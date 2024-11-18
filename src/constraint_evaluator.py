@@ -2,7 +2,6 @@ from typing import Optional
 from common.results import *
 from common.expressions import *
 
-
 def satisfies_constraints(prev: InterpretResult, next: EntitySnapshot) -> bool:
     cache = [None] * prev.cache_size
     return all([evaluate_expr(e, next.constants, cache) for e in prev.constraints])
