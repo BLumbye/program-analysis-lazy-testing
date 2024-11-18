@@ -9,6 +9,7 @@ from common.results import InterpretResult
 from common.binary_expression import *
 
 l.basicConfig(level=l.DEBUG, format="%(message)s")
+# l.disable(l.DEBUG)
 
 class AssertionError:
     def throw(self):
@@ -70,7 +71,6 @@ class SimpleInterpreter:
             fn(next)
         else:
             raise Exception(f"can't handle {next['opr']!r}")
-
     
     def interpret(self, limit=1000) -> InterpretResult:
         for _ in range(limit):
@@ -175,6 +175,10 @@ class SimpleInterpreter:
             self.current_method().stack.append(result)
         else:
             self.done = f"can't handle {bc_operant!r} for binary operations"
+
+    def step_negate(self, _):
+        value = self.current_method().stack.pop()
+        self.current_method().stack.append(-value)
 
     def step_goto(self, bc):
         self.current_method().pc = bc["target"]

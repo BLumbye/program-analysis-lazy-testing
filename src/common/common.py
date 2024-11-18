@@ -4,7 +4,8 @@ import os
 CONST_ZERO = '@0'
 CONST_ASSERTION_DISABLED = '$assertionsDisabled'
 
-# if you load an anonymous variable name using push, then use the "offset" as the variable name
+# if you load an anonymous variable name using push, then use the 
+# instruction line index (self.current_method().pc - 1) as the variable name
 # if you load a variable from a class the method name is None
 def constant_name(variable_name, class_name, method_name = None):
     parts = [class_name, method_name, variable_name]

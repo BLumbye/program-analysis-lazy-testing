@@ -8,6 +8,7 @@ from common.binary_expression import *
 from simple_interpreter import SimpleInterpreter, Method
 
 l.basicConfig(level=l.DEBUG, format="%(message)s")
+# l.disable(l.DEBUG)
 
 class SymbolicInterpreter(SimpleInterpreter):
 
@@ -35,8 +36,8 @@ class SymbolicInterpreter(SimpleInterpreter):
             self.done = f"can't handle get operations"
 
     @override
-    def step_push(self,bc):
-        expr = constant_name(bc['offset'], self.current_method().class_name, self.current_method().name)
+    def step_push(self, bc):
+        expr = constant_name(self.current_method().pc - 1, self.current_method().class_name, self.current_method().name)
         self.constant_dependencies.add(expr)
         
         if bc["value"] == None:
@@ -48,6 +49,15 @@ class SymbolicInterpreter(SimpleInterpreter):
     def step_load(self, bc):
         value, expr = self.current_method().locals[bc["index"]]
         self.current_method().stack.append((value, expr))
+
+    @override
+    def step_incr(self, bc):
+        value, expr = self.current_method().locals[bc["index"]]
+        amount_expr = constant_name(self.current_method().pc - 1, self.current_method().class_name, self.current_method().name)
+        self.constant_dependencies.add(amount_expr)
+
+        new_expr = BinaryExpr(expr, BinaryOp.ADD, amount_expr, self.get_cache_id())
+        self.current_method().locals[bc["index"]] = (value + bc["amount"], new_expr)
 
     @override
     def step_binary(self, bc):
@@ -67,6 +77,12 @@ class SymbolicInterpreter(SimpleInterpreter):
             self.current_method().stack.append((result, new_expr))
         else:
             self.done = f"can't handle {bc_operant!r} for binary operations"
+
+    @override
+    def step_negate(self, _):
+        value, expr = self.current_method().stack.pop()
+        new_expr = BinaryExpr(CONST_ZERO, BinaryOp.SUB, expr, self.get_cache_id())
+        self.current_method().stack.append((-value, new_expr))
     
     @override
     def step_store(self, bc):

@@ -8,8 +8,8 @@ from common.common import CONST_ZERO, CONST_ASSERTION_DISABLED
 class InterpretResult:
     test_name: str
     status: str # The same status as JPAMB
-    depends_on_constants: list[str]
     depends_on_methods: list[str]
+    depends_on_constants: list[str]
     constraints: list[BinaryExpr]
     cache_size: int  # the number of unique cache ids
 
@@ -19,11 +19,6 @@ class SavedResult:
     snapshot: EntitySnapshot
     entity_changes_tests: dict[str, list[str]] = field(default_factory=dict)
     tests: dict[str, InterpretResult] = field(default_factory=dict)
-
-    def __init__(self, snapshot: EntitySnapshot):
-        self.entity_changes_tests = {}
-        self.tests = {}
-        self.snapshot = snapshot
 
 @dataclass
 class EntitySnapshot:

@@ -11,7 +11,7 @@ def test_find_SOME_CONSTANT():
 def test_find_inlineconstant():
     codebase = load_codebase("constant_becomes_equal", True)
     snapshot = codebase_snapshot(codebase)
-    assert snapshot.constants[constant_name("9", "Simple", "simpleTest")] == 42
+    assert snapshot.constants[constant_name("3", "Simple", "simpleTest")] == 42
     
     
 def test_A_method_has_not_changed():
