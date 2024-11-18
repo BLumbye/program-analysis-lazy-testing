@@ -11,10 +11,11 @@ l.basicConfig(level=l.DEBUG, format="%(message)s")
 
 class SymbolicInterpreter(SimpleInterpreter):
 
-    _found_constraints = set()
+    _found_constraints: set[str]
 
     def __init__(self, codebase: Codebase, method_stack: deque[Method]):
         super().__init__(codebase, method_stack)  # Pass required args to SimpleInterpreter
+        self._found_constraints = set()
         # set_should_log(True)
 
     def get_cache_id(self) -> int:
@@ -23,11 +24,11 @@ class SymbolicInterpreter(SimpleInterpreter):
         return cache_id
     
     def add_constraint(self, expr) -> None:
-        self._cache_size = max(self._cache_size, expr.cache_id + 1)
-        # str_expr = str(expr)
-        # if str_expr not in self._found_constraints:
-        self._constraints.append(expr)
-        # self._found_constraints.add(str_expr)
+        str_expr = str(expr)
+        if str_expr not in self._found_constraints:
+            self._cache_size = max(self._cache_size, expr.cache_id + 1)
+            self._constraints.append(expr)
+        self._found_constraints.add(str_expr)
 
     def falsify_expr(self, e: BinaryExpr) -> BinaryExpr:
         return BinaryExpr(e, BinaryOp.EQ, CONST_ZERO, self.get_cache_id())

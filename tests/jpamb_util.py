@@ -392,23 +392,16 @@ JPAMB_EXPECTED_RESULTS = {
     28 : ExpectedResult(
             ["jpamb/cases/Loops:neverAsserts"], 
             ["jpamb/cases/Loops:neverAsserts:0"], 
-            [
-                BinaryExpr("jpamb/cases/Loops:neverAsserts:0", BinaryOp.LE, CONST_ZERO, 0)
-                #  until limit
-            ], 
-            1
+            [BinaryExpr(BinaryExpr("jpamb/cases/Loops:neverAsserts:0", BinaryOp.LE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1)], 
+            2
         ),
     29 : ExpectedResult(
             ["jpamb/cases/Loops:neverDivides"], 
             ["jpamb/cases/Loops:neverDivides:0"], 
-            [
-                BinaryExpr("jpamb/cases/Loops:neverDivides:0", BinaryOp.LE, CONST_ZERO, 0)
-                #  until limit
-            ], 
-            1
+            [BinaryExpr(BinaryExpr("jpamb/cases/Loops:neverDivides:0", BinaryOp.LE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1)], 
+            2
         ),
     # TODO: fix cache_ids
-    # TODO: can we avoid repeating expressions
     30 : ExpectedResult(
             ["jpamb/cases/Loops:terminates"], 
             [

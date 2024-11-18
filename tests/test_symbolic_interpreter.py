@@ -35,7 +35,7 @@ class TestSymbolicInterpreter:
         assert result.status == case.response
         assert set(result.depends_on_methods) == set(expected_result.depends_on_methods)
 
-        if (case.id not in [57, 29, 28, 22, 19, 18, 17, 16, 15]):
+        if (case.id not in [57, 22, 19, 18, 17, 16, 15]):
             assert set(result.depends_on_constants) == set(expected_result.depends_on_constants)
             assert result.constraints == expected_result.constraints
             assert result.cache_size == expected_result.cache_size
