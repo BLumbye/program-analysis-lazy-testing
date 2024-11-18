@@ -24,8 +24,12 @@ def main():
         symbolic_interpreter = sys.argv[2] == "symbolic"
     
     delta = eval_codebase(sys.argv[1], symbolic_interpreter)
-    # print("all tests:", delta.t_run_all_tests)
-    # print("necessary tests:", delta.t_run_necessary_tests)
+    print("all tests:", delta.t_run_all_tests)
+    print("necessary tests:", delta.t_run_necessary_tests)
+    print("actual", delta.new_tests)
+    print("prev constants", delta.prev_snapshot.constants)
+    print("next constants", delta.next_snapshot.constants)
+    print("next constants", delta.prev_saved_result.tests)
 
 
 def timer(fun):

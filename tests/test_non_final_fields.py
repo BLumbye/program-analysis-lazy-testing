@@ -7,8 +7,8 @@ def test_codebase_loads_fields():
 
 def test_interpreter():
     codebase = load_codebase("non_final_fields", True)
-    interpreter = SimpleInterpreter(codebase, deque([Method("Simple", "simpleTest", codebase.get_method(
-        "Simple", "simpleTest", [])["code"]["bytecode"], [], deque(), 0)]))
+    interpreter = SimpleInterpreter(codebase, deque([Method("Simple", "unchanged", codebase.get_method(
+        "Simple", "unchanged", [])["code"]["bytecode"], [], deque(), 0)]))
     result = interpreter.interpret()
     assert result.status == "ok"
 

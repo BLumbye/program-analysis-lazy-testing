@@ -29,6 +29,8 @@ def test_codebase_symbolic_reruns(codebase_name: str):
     expected_rerun_tests = get_expected_test_names(delta.prev_codebase, "shouldRunSymbolic")
     print("expected", expected_rerun_tests)
     print("actual", delta.new_tests)
+    # print("prev constants", delta.prev_snapshot.constants)
+    # print("next constants", delta.next_snapshot.constants)
     assert delta.new_tests == expected_rerun_tests
 
 @pytest.mark.parametrize("codebase_name", codebases_except_scratch_breaking())
@@ -39,4 +41,6 @@ def test_codebase_dynamic_reruns(codebase_name: str):
     expected_rerun_tests = get_expected_test_names(delta.prev_codebase, "shouldRunDynamic")
     print("expected", expected_rerun_tests)
     print("actual", delta.new_tests)
+    print("prev constants", delta.prev_snapshot.constants)
+    print("next constants", delta.next_snapshot.constants)
     assert delta.new_tests == expected_rerun_tests

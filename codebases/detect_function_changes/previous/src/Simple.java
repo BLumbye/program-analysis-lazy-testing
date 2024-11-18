@@ -2,7 +2,7 @@ import utils.*;
 
 public class Simple {
 
-    static final int SOME_CONSTANT = 42;
+    static int SOME_CONSTANT = 42;
 
     public static int B() {
         return SOME_CONSTANT;

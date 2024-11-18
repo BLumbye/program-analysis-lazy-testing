@@ -20,7 +20,11 @@ def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: obje
         match inst["opr"]:
             case "push":
                 const_name = constant_name(i, class_name, method_name)
-                snapshot.constants[const_name] = int(inst["value"]["value"]) #TODO: cast value to int
+                
+                val = None
+                if inst["value"] != None:
+                    val = int(inst["value"]["value"])
+                snapshot.constants[const_name] = val #TODO: cast value to int
                 method_constants.add(const_name)
                 hash_str += "push"
                 

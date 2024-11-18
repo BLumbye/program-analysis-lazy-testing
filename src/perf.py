@@ -22,19 +22,19 @@ def perf():
         codebases = all_codebases()
 
     set_should_log(False)
-    repetitions = 500
+    repetitions = 100
     results = []
     for i in range(repetitions):
         result = DeltaResult()
         for codebase in codebases:
-            delta = eval_codebase(codebase, False)
+            delta = eval_codebase(codebase, True)
             result.add_time(delta)
         results.append(result)
     
     # frame = pd.DataFrame.from_dict(results)
     frame = pd.DataFrame(results)
     print(frame.describe())
-    
+
     print("all tests:", delta.entire_prev_run)
     print("necessary tests:", delta.entire_next_run)
     print("delta:", json.dumps(delta.times()))
