@@ -60,11 +60,11 @@ class SimpleInterpreter:
         return self.method_stack[-1]
 
     def debug_step(self, next):
-        print(f"STEP {self.step_count}:")
-        print(f"  METHOD: {self.current_method().class_name}.{self.current_method().name}")
-        print(f"  PC: {self.current_method().pc} {next}")
-        print(f"  LOCALS: {self.current_method().locals}")
-        print(f"  STACK: {self.current_method().stack}")
+        l.debug(f"STEP {self.step_count}:")
+        l.debug(f"  METHOD: {self.current_method().class_name}.{self.current_method().name}")
+        l.debug(f"  PC: {self.current_method().pc} {next}")
+        l.debug(f"  LOCALS: {self.current_method().locals}")
+        l.debug(f"  STACK: {self.current_method().stack}")
 
     def step(self):
         self.step_count += 1

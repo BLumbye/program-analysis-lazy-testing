@@ -48,16 +48,6 @@ python src/perf.py {codebase}
 pytest tests
 ```
 
-#### Prepare Test Data
-
-```sh
-cd tests
-git clone https://github.com/kalhauge/jpamb.git --no-checkout
-cd jpamb
-git sparse-checkout set decompiled/jpamb/cases stats/cases.txt --no-cone
-git checkout 6746424
-```
-
 ### CodeBases
 
 Codebase are meant to test isolated scenarios and are meant to not change much over time so we can write unit test for them.

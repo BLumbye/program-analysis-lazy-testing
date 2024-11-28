@@ -1,8 +1,8 @@
 import logging as l
 from collections import deque
-from typing import override
+from typing import override, Optional
 
-from common.common import CONST_ASSERTION_DISABLED, CONST_ZERO, constant_name
+from common.common import CONST_ZERO, constant_name
 from common.codebase import *
 from common.expressions import *
 from simple_interpreter import SimpleInterpreter, Method, set_should_log
@@ -15,12 +15,11 @@ class SymbolicInterpreter(SimpleInterpreter):
         super().__init__(codebase, method_stack)  # Pass required args to SimpleInterpreter
         self._found_constraints = set()
         # set_should_log(True)
-        # self.fields = deepcopy(codebase.get_fields())
+
         for class_name, fields in self.fields.items():
             for field_name, field_value in fields.items():
                 fields[field_name] = (field_value, constant_name(field_name, class_name))
         
-
     def __get_cache_id(self) -> int:
         cache_id = self._next_cache_ID 
         self._next_cache_ID += 1
@@ -38,13 +37,6 @@ class SymbolicInterpreter(SimpleInterpreter):
         super().debug_step(next)
         l.debug(f"  CONSTRAINTS: {self._constraints}")
         l.debug(f"  NEXT CACHE ID: {self._next_cache_ID}")
-    
-    # @override
-    # def step_get(self, bc):
-    #     if bc["field"]["name"] == CONST_ASSERTION_DISABLED:
-    #         self.current_method().stack.append((0, CONST_ASSERTION_DISABLED))
-    #     else:
-    #         self.done = f"can't handle get operations"
 
     @override
     def step_push(self, bc):
@@ -72,11 +64,14 @@ class SymbolicInterpreter(SimpleInterpreter):
         value1, expr = self.current_method().stack.pop()
         bc_operant = bc["operant"]
 
-        if value2 == 0 and bc_operant in ["div", "rem"]:
-            # If we fail the same way, don't run again
-            self.__add_constraint(BinaryExpr(expr2, BinaryOp.EQ, CONST_ZERO, self.__get_cache_id()))
-            self.done = "divide by zero"
-            return
+        if bc_operant in ["div", "rem"]:
+            if value2 == 0:
+                # If we fail the same way, don't run again
+                self.__add_constraint(BinaryExpr(expr2, BinaryOp.EQ, CONST_ZERO, self.__get_cache_id()))
+                self.done = "divide by zero"
+                return
+        
+            self.__add_constraint(BinaryExpr(expr2, BinaryOp.NE, CONST_ZERO, self.__get_cache_id()))
 
         if (operant := BINARY_OPERATION_HANDLERS.get(bc_operant)) is not None:
             result, opr = operant(value1, value2)
@@ -147,6 +142,20 @@ class SymbolicInterpreter(SimpleInterpreter):
         elem1 = self.current_method().stack.pop()
         self.__if(bc, "if", elem1, elem2)
 
+    def _check_array(self, array: Optional[list[int]], index: Optional[int], 
+                     array_expr: ArrayExpr | str, index_expr: Optional[Expr]) -> bool:
+        if array is None:
+            self.__add_constraint(BinaryExpr(array_expr, BinaryOp.EQ, None, self.__get_cache_id()))
+            self.done = "null pointer"
+            return False
+        
+        if index is not None and index >= len(array):
+            self.__add_constraint(BinaryExpr(index_expr, BinaryOp.GE, array_expr.size, self.__get_cache_id()))
+            self.done = "out of bounds"
+            return False
+
+        return True
+
     @override
     def step_newarray(self, bc):
         if bc["dim"] != 1:
@@ -160,24 +169,34 @@ class SymbolicInterpreter(SimpleInterpreter):
     @override
     def step_array_store(self, _):
         value, expr = self.current_method().stack.pop()
-        index, _ = self.current_method().stack.pop()
+        index, index_expr = self.current_method().stack.pop()
         array_value, array_expr = self.current_method().stack.pop()
-        if not super()._check_array(array_value, index):
+        if not self._check_array(array_value, index, array_expr, index_expr):
             return
+        # Is it the same index as previously?
+        self.__add_constraint(BinaryExpr(index, BinaryOp.EQ, index_expr, self.__get_cache_id()))
+        # Is the value still stored within the array?
+        self.__add_constraint(BinaryExpr(index_expr, BinaryOp.LT, array_expr.size, self.__get_cache_id()))
         array_value[index] = value
         array_expr.array[index] = expr
 
     @override
     def step_array_load(self, _):
-        index, _ = self.current_method().stack.pop()
+        index, index_expr = self.current_method().stack.pop()
         array_value, array_expr = self.current_method().stack.pop()
-        if not super()._check_array(array_value, index):
+        print(index, index_expr, array_value, array_expr)
+        print(self.fields)
+        if not self._check_array(array_value, index, array_expr, index_expr):
             return
+        # Is it the same index as previously?
+        self.__add_constraint(BinaryExpr(index, BinaryOp.EQ, index_expr, self.__get_cache_id()))
+        # Is the value fetched from within the array?
+        self.__add_constraint(BinaryExpr(index_expr, BinaryOp.LT, array_expr.size, self.__get_cache_id()))
         self.current_method().stack.append((array_value[index], array_expr.array[index]))
 
     @override
     def step_arraylength(self, _):
         array_value, array_expr = self.current_method().stack.pop()
-        if not super()._check_array(array_value, None):
+        if not self._check_array(array_value, None, array_expr, None):
             return
         self.current_method().stack.append((len(array_value), array_expr.size))

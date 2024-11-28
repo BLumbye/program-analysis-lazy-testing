@@ -65,7 +65,6 @@ def eval_codebase(codebase_name: str, use_symbolic_interpreter:bool) -> DeltaRes
 
     return result
 
-#TODO: lookup based on test
 def run_tests(saved_result: SavedResult, required_tests: set[str], codebase : Codebase, use_symbolic_interpreter: bool) -> None:
     for class_name, tests in codebase.get_tests().items():
         for test in tests:
