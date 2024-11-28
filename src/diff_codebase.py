@@ -1,5 +1,4 @@
 from __future__ import annotations
-from dataclasses import dataclass
 import json 
 import hashlib
 
@@ -8,7 +7,7 @@ from common.codebase import *
 from common.results import *
 
 def copy_dict_except(dict, exceptions):
-    return { k:v for k, v in dict.items() if k not in exceptions}
+    return { k:v for k, v in dict.items() if k not in exceptions }
     
 def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: object, codebase: Codebase, visited: set[str]):
     hash_str = ""
@@ -20,17 +19,13 @@ def method_snapshot(snapshot: EntitySnapshot, class_name: str, curr_method: obje
         match inst["opr"]:
             case "push":
                 const_name = constant_name(i, class_name, method_name)
-                
-                val = None
-                if inst["value"] != None:
-                    val = int(inst["value"]["value"])
-                snapshot.constants[const_name] = val #TODO: cast value to int
+                snapshot.constants[const_name] = int(inst["value"]["value"]) if inst["value"] else None
                 method_constants.add(const_name)
                 hash_str += "push"
                 
             case "incr":
                 const_name = constant_name(i, class_name, method_name)
-                snapshot.constants[const_name] = int(inst["amount"]) #TODO: cast value to int
+                snapshot.constants[const_name] = int(inst["amount"])
                 method_constants.add(const_name)
                 hash_str += "incr"
                 

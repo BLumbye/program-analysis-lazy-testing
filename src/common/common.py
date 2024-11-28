@@ -1,7 +1,7 @@
 import os
 
 # constants that can be used
-CONST_ZERO = '@0'
+CONST_ZERO = 0
 CONST_ASSERTION_DISABLED = '$assertionsDisabled'
 
 # if you load an anonymous variable name using push, then use the 

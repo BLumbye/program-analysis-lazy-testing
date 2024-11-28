@@ -1,7 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from common.expressions import BinaryExpr
-from common.common import CONST_ZERO, CONST_ASSERTION_DISABLED
 from common.codebase import Codebase
 
 # Note: result is written so it is able to be serialized
@@ -23,7 +22,7 @@ class SavedResult:
 
 @dataclass
 class EntitySnapshot:
-    constants: dict[str, int] = field(default_factory=lambda: {CONST_ZERO: 0}) # cached values
+    constants: dict[str, int] = field(default_factory=dict) # cached values
     method_hashes: dict[str, int] = field(default_factory=dict) # hash does not include constants values
     method_constants: dict[str, set[str]] = field(default_factory=dict)
 
@@ -114,4 +113,3 @@ class DeltaResult:
         self.t_save_and_restore +=other.t_save_and_restore
         self.t_run_all_tests +=other.t_run_all_tests
         self.t_run_necessary_tests +=other.t_run_necessary_tests
-

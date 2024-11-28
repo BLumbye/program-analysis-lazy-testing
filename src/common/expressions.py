@@ -10,12 +10,15 @@ class BinaryExpr:
     right: Expr
     cache_id: int # a unique id [0-n], so we can cache part of the computation 
 
+    def __repr__(self):
+        return f"({self.left} {self.operator.value} {self.right})({self.cache_id})"
+
 @dataclass
 class ArrayExpr:
-    array: list[Expr]
     size: Expr
+    array: list[Expr]
 
-Expr = BinaryExpr | ArrayExpr | str # str is a constant_name
+Expr = BinaryExpr | str | int # str is a constant_name
 
 class BinaryOp(str, Enum):
     EQ = "==",
