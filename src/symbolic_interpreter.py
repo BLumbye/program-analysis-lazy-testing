@@ -11,8 +11,6 @@ l.basicConfig(level=l.DEBUG, format="%(message)s")
 
 class SymbolicInterpreter(SimpleInterpreter):
 
-    _found_constraints: set[str]
-
     def __init__(self, codebase: Codebase, method_stack: deque[Method]):
         super().__init__(codebase, method_stack)  # Pass required args to SimpleInterpreter
         self._found_constraints = set()
@@ -23,20 +21,17 @@ class SymbolicInterpreter(SimpleInterpreter):
                 fields[field_name] = (field_value, constant_name(field_name, class_name))
         
 
-    def get_cache_id(self) -> int:
+    def __get_cache_id(self) -> int:
         cache_id = self._next_cache_ID 
         self._next_cache_ID += 1
         return cache_id
     
-    def add_constraint(self, expr) -> None:
-        str_expr = str(expr)
-        if str_expr not in self._found_constraints:
-            self._cache_size = max(self._cache_size, expr.cache_id + 1)
-            self._constraints.append(expr)
-        self._found_constraints.add(str_expr)
+    def __add_constraint(self, expr: BinaryExpr) -> None:
+        self._constraints.append(expr)
+        self._cache_size = max(self._cache_size, expr.cache_id + 1)
 
-    def falsify_expr(self, e: BinaryExpr) -> BinaryExpr:
-        return BinaryExpr(e, BinaryOp.EQ, CONST_ZERO, self.get_cache_id())
+    def __falsify_expr(self, e: BinaryExpr) -> BinaryExpr:
+        return BinaryExpr(e, BinaryOp.EQ, CONST_ZERO, self.__get_cache_id())
     
     @override
     def debug_step(self, next):
@@ -68,7 +63,7 @@ class SymbolicInterpreter(SimpleInterpreter):
         amount_expr = constant_name(self.current_method().pc - 1, self.current_method().class_name, self.current_method().name)
         self.constant_dependencies.add(amount_expr)
 
-        new_expr = BinaryExpr(expr, BinaryOp.ADD, amount_expr, self.get_cache_id())
+        new_expr = BinaryExpr(expr, BinaryOp.ADD, amount_expr, self.__get_cache_id())
         self.current_method().locals[bc["index"]] = (value + bc["amount"], new_expr)
 
     @override
@@ -79,14 +74,14 @@ class SymbolicInterpreter(SimpleInterpreter):
 
         if value2 == 0 and bc_operant in ["div", "rem"]:
             # If we fail the same way, don't run again
-            self.add_constraint(BinaryExpr(expr2, BinaryOp.EQ, CONST_ZERO, self.get_cache_id()))
+            self.__add_constraint(BinaryExpr(expr2, BinaryOp.EQ, CONST_ZERO, self.__get_cache_id()))
             self.done = "divide by zero"
             return
 
         if (operant := BINARY_OPERATION_HANDLERS.get(bc_operant)) is not None:
             result, opr = operant(value1, value2)
         
-            new_expr = BinaryExpr(expr, opr, expr2, self.get_cache_id())
+            new_expr = BinaryExpr(expr, opr, expr2, self.__get_cache_id())
             self.current_method().stack.append((result, new_expr))
         else:
             self.done = f"can't handle {bc_operant!r} for binary operations"
@@ -94,7 +89,7 @@ class SymbolicInterpreter(SimpleInterpreter):
     @override
     def step_negate(self, _):
         value, expr = self.current_method().stack.pop()
-        new_expr = BinaryExpr(CONST_ZERO, BinaryOp.SUB, expr, self.get_cache_id())
+        new_expr = BinaryExpr(CONST_ZERO, BinaryOp.SUB, expr, self.__get_cache_id())
         self.current_method().stack.append((-value, new_expr))
     
     @override
@@ -130,14 +125,14 @@ class SymbolicInterpreter(SimpleInterpreter):
         
         if (cond := IF_CONDITION_HANDLERS.get(bc_condition)) is not None:
             result, opr = cond(value1, value2)
-            new_expr = BinaryExpr(expr1, opr, expr2, self.get_cache_id())
+            new_expr = BinaryExpr(expr1, opr, expr2, self.__get_cache_id())
 
             if result:
                 self.current_method().pc = bc["target"]
             else:
-                new_expr = self.falsify_expr(new_expr)
+                new_expr = self.__falsify_expr(new_expr)
                 
-            self.add_constraint(new_expr)
+            self.__add_constraint(new_expr)
         else:
             self.done = f"can't handle {bc_condition!r} for {inst_name} operations"
 
