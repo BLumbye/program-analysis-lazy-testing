@@ -67,6 +67,7 @@ JPAMB_EXPECTED_RESULTS = {
     0 : ExpectedResult(
             ["jpamb/cases/Arrays:arrayContent"], 
             [
+                CONST_ASSERTION_DISABLED,
                 "jpamb/cases/Arrays:arrayContent:0",
                 "jpamb/cases/Arrays:arrayContent:3",
                 "jpamb/cases/Arrays:arrayContent:4",
@@ -114,6 +115,7 @@ JPAMB_EXPECTED_RESULTS = {
     3 : ExpectedResult(
             ["jpamb/cases/Arrays:arrayIsNullLength"], 
             [
+                CONST_ASSERTION_DISABLED,
                 "jpamb/cases/Arrays:arrayIsNullLength:0"
             ], 
             [
@@ -124,6 +126,7 @@ JPAMB_EXPECTED_RESULTS = {
     4 : ExpectedResult(
             ["jpamb/cases/Arrays:arrayLength"], 
             [
+                CONST_ASSERTION_DISABLED,
                 "jpamb/cases/Arrays:arrayLength:0",
                 "jpamb/cases/Arrays:arrayLength:3",
                 "jpamb/cases/Arrays:arrayLength:4",
@@ -139,7 +142,9 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     5 : ExpectedResult(
             ["jpamb/cases/Arrays:arrayNotEmpty"], 
-            [], 
+            [
+                CONST_ASSERTION_DISABLED
+            ], 
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr("jpamb/cases/Arrays:arrayNotEmpty:input:a:size:1", BinaryOp.GT, CONST_ZERO, 2)
@@ -148,7 +153,9 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     6 : ExpectedResult(
             ["jpamb/cases/Arrays:arrayNotEmpty"], 
-            [], 
+            [
+                CONST_ASSERTION_DISABLED
+            ], 
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr(BinaryExpr("jpamb/cases/Arrays:arrayNotEmpty:input:a:size:0", BinaryOp.GT, CONST_ZERO, 2), BinaryOp.EQ, CONST_ZERO, 3)
@@ -196,6 +203,7 @@ JPAMB_EXPECTED_RESULTS = {
     10 : ExpectedResult(
             ["jpamb/cases/Arrays:arraySpellsHello"], 
             [
+                CONST_ASSERTION_DISABLED,
                 "jpamb/cases/Arrays:arraySpellsHello:3",
                 "jpamb/cases/Arrays:arraySpellsHello:5",
                 "jpamb/cases/Arrays:arraySpellsHello:8",
@@ -220,6 +228,7 @@ JPAMB_EXPECTED_RESULTS = {
     11 : ExpectedResult(
             ["jpamb/cases/Arrays:arraySpellsHello"], 
             [
+                CONST_ASSERTION_DISABLED,
                 "jpamb/cases/Arrays:arraySpellsHello:3",
                 "jpamb/cases/Arrays:arraySpellsHello:5"
             ], 
@@ -232,6 +241,7 @@ JPAMB_EXPECTED_RESULTS = {
     12 : ExpectedResult(
             ["jpamb/cases/Arrays:arraySpellsHello"], 
             [
+                CONST_ASSERTION_DISABLED,
                 "jpamb/cases/Arrays:arraySpellsHello:3"
             ], 
             [
@@ -242,6 +252,7 @@ JPAMB_EXPECTED_RESULTS = {
     13 : ExpectedResult(
             ["jpamb/cases/Arrays:arraySumIsLarge"], 
             [
+                CONST_ASSERTION_DISABLED,
                 "jpamb/cases/Arrays:arraySumIsLarge:0",  # sum
                 "jpamb/cases/Arrays:arraySumIsLarge:2",  # i
                 "jpamb/cases/Arrays:arraySumIsLarge:14", # ++
@@ -260,6 +271,7 @@ JPAMB_EXPECTED_RESULTS = {
     14 : ExpectedResult(
             ["jpamb/cases/Arrays:arraySumIsLarge"], 
             [
+                CONST_ASSERTION_DISABLED,
                 "jpamb/cases/Arrays:arraySumIsLarge:0", # sum
                 "jpamb/cases/Arrays:arraySumIsLarge:2", # i
                 "jpamb/cases/Arrays:arraySumIsLarge:19" # 300
@@ -315,7 +327,9 @@ JPAMB_EXPECTED_RESULTS = {
                 "jpamb/cases/Calls:callsAssertFalse", 
                 "jpamb/cases/Calls:assertFalse"
             ], 
-            [], 
+            [
+                CONST_ASSERTION_DISABLED
+            ], 
             [BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1)], 
             2
         ),
@@ -324,7 +338,10 @@ JPAMB_EXPECTED_RESULTS = {
                 "jpamb/cases/Calls:callsAssertFib", 
                 "jpamb/cases/Calls:fib"
             ], 
-            ["jpamb/cases/Calls:callsAssertFib:4"], 
+            [
+                CONST_ASSERTION_DISABLED,
+                "jpamb/cases/Calls:callsAssertFib:4"
+            ], 
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr("jpamb/cases/Calls:callsAssertFib:input:a:0", BinaryOp.EQ, CONST_ZERO, 2),
@@ -347,7 +364,9 @@ JPAMB_EXPECTED_RESULTS = {
                 "jpamb/cases/Calls:assertIf", 
                 "jpamb/cases/Calls:assertFalse"
             ], 
-            [], 
+            [
+                CONST_ASSERTION_DISABLED
+            ], 
             [
                 BinaryExpr("jpamb/cases/Calls:callsAssertIf:input:a:0", BinaryOp.EQ, CONST_ZERO, 0),
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 1), BinaryOp.EQ, CONST_ZERO, 2)
@@ -405,6 +424,7 @@ JPAMB_EXPECTED_RESULTS = {
     30 : ExpectedResult(
             ["jpamb/cases/Loops:terminates"], 
             [
+                CONST_ASSERTION_DISABLED,
                 "jpamb/cases/Loops:terminates:0",
                 "jpamb/cases/Loops:terminates:4"
             ], 
@@ -416,7 +436,9 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     31 : ExpectedResult(
             ["jpamb/cases/Simple:assertBoolean"], 
-            [],
+            [
+                CONST_ASSERTION_DISABLED
+            ],
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr(BinaryExpr("jpamb/cases/Simple:assertBoolean:input:a:0", BinaryOp.NE, CONST_ZERO, 2), BinaryOp.EQ, CONST_ZERO, 3)
@@ -425,7 +447,9 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     32 : ExpectedResult(
             ["jpamb/cases/Simple:assertBoolean"], 
-            [],
+            [
+                CONST_ASSERTION_DISABLED
+            ],
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr("jpamb/cases/Simple:assertBoolean:input:a:1", BinaryOp.NE, CONST_ZERO, 2)
@@ -434,13 +458,17 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     33 : ExpectedResult(
             ["jpamb/cases/Simple:assertFalse"], 
-            [], 
+            [
+                CONST_ASSERTION_DISABLED
+            ], 
             [BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1)], 
             2
         ),
     34 : ExpectedResult(
             ["jpamb/cases/Simple:assertInteger"], 
-            [],
+            [
+                CONST_ASSERTION_DISABLED
+            ],
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr(BinaryExpr("jpamb/cases/Simple:assertInteger:input:a:0", BinaryOp.NE, CONST_ZERO, 2), BinaryOp.EQ, CONST_ZERO, 3)
@@ -449,7 +477,9 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     35 : ExpectedResult(
             ["jpamb/cases/Simple:assertInteger"], 
-            [],
+            [
+                CONST_ASSERTION_DISABLED
+            ],
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr("jpamb/cases/Simple:assertInteger:input:a:1", BinaryOp.NE, CONST_ZERO, 2)
@@ -458,7 +488,9 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     36 : ExpectedResult(
             ["jpamb/cases/Simple:assertPositive"], 
-            [],
+            [
+                CONST_ASSERTION_DISABLED
+            ],
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr(BinaryExpr("jpamb/cases/Simple:assertPositive:input:a:-1", BinaryOp.GT, CONST_ZERO, 2), BinaryOp.EQ, CONST_ZERO, 3)
@@ -467,7 +499,9 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     37 : ExpectedResult(
             ["jpamb/cases/Simple:assertPositive"], 
-            [], 
+            [
+                CONST_ASSERTION_DISABLED
+            ], 
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr("jpamb/cases/Simple:assertPositive:input:a:1", BinaryOp.GT, CONST_ZERO, 2)
@@ -476,7 +510,10 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     38 : ExpectedResult(
             ["jpamb/cases/Simple:checkBeforeAssert"], 
-            ["jpamb/cases/Simple:checkBeforeAssert:5"], 
+            [
+                CONST_ASSERTION_DISABLED,
+                "jpamb/cases/Simple:checkBeforeAssert:5"
+            ], 
             [
                 BinaryExpr("jpamb/cases/Simple:checkBeforeAssert:input:a:-1", BinaryOp.NE, CONST_ZERO, 0),
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 1), BinaryOp.EQ, CONST_ZERO, 2),
@@ -493,6 +530,7 @@ JPAMB_EXPECTED_RESULTS = {
     40 : ExpectedResult(
             ["jpamb/cases/Simple:checkBeforeDivideByN2"], 
             [
+                CONST_ASSERTION_DISABLED,
                 "jpamb/cases/Simple:checkBeforeDivideByN2:8",
                 "jpamb/cases/Simple:checkBeforeDivideByN2:15"
             ],
@@ -511,7 +549,9 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     42 : ExpectedResult(
             ["jpamb/cases/Simple:checkBeforeDivideByN"],  
-            [], 
+            [
+                CONST_ASSERTION_DISABLED
+            ], 
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr(BinaryExpr("jpamb/cases/Simple:checkBeforeDivideByN:input:a:0", BinaryOp.NE, CONST_ZERO, 2), BinaryOp.EQ, CONST_ZERO, 3)
@@ -520,7 +560,10 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     43 : ExpectedResult(
             ["jpamb/cases/Simple:checkBeforeDivideByN"], 
-            ["jpamb/cases/Simple:checkBeforeDivideByN:8"], 
+            [
+                CONST_ASSERTION_DISABLED,
+                "jpamb/cases/Simple:checkBeforeDivideByN:8"
+            ], 
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr("jpamb/cases/Simple:checkBeforeDivideByN:input:a:1", BinaryOp.NE, CONST_ZERO, 2)
@@ -598,7 +641,9 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     54 : ExpectedResult(
             ["jpamb/cases/Simple:multiError"], 
-            [], 
+            [
+                CONST_ASSERTION_DISABLED
+            ], 
             [
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr(BinaryExpr("jpamb/cases/Simple:multiError:input:a:0", BinaryOp.NE, CONST_ZERO, 2), BinaryOp.EQ, CONST_ZERO, 3)
@@ -608,6 +653,7 @@ JPAMB_EXPECTED_RESULTS = {
     55 : ExpectedResult(
             ["jpamb/cases/Simple:multiError"], 
             [
+                CONST_ASSERTION_DISABLED,
                 "jpamb/cases/Simple:multiError:8",
                 "jpamb/cases/Simple:multiError:9"
             ], 
@@ -620,7 +666,9 @@ JPAMB_EXPECTED_RESULTS = {
         ),
     56 : ExpectedResult(
             ["jpamb/cases/Tricky:collatz"], 
-            [], 
+            [
+                CONST_ASSERTION_DISABLED
+            ], 
             [ 
                 BinaryExpr(BinaryExpr(CONST_ASSERTION_DISABLED, BinaryOp.NE, CONST_ZERO, 0), BinaryOp.EQ, CONST_ZERO, 1),
                 BinaryExpr(BinaryExpr("jpamb/cases/Tricky:collatz:input:a:0", BinaryOp.GT, CONST_ZERO, 2), BinaryOp.EQ, CONST_ZERO, 3)

@@ -23,7 +23,7 @@ class SavedResult:
 
 @dataclass
 class EntitySnapshot:
-    constants: dict[str, int] = field(default_factory=lambda: {CONST_ZERO: 0, CONST_ASSERTION_DISABLED : 0}) # cached values
+    constants: dict[str, int] = field(default_factory=lambda: {CONST_ZERO: 0}) # cached values
     method_hashes: dict[str, int] = field(default_factory=dict) # hash does not include constants values
     method_constants: dict[str, set[str]] = field(default_factory=dict)
 

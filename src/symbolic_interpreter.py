@@ -17,6 +17,11 @@ class SymbolicInterpreter(SimpleInterpreter):
         super().__init__(codebase, method_stack)  # Pass required args to SimpleInterpreter
         self._found_constraints = set()
         # set_should_log(True)
+        # self.fields = deepcopy(codebase.get_fields())
+        for class_name, fields in self.fields.items():
+            for field_name, field_value in fields.items():
+                fields[field_name] = (field_value, constant_name(field_name, class_name))
+        
 
     def get_cache_id(self) -> int:
         cache_id = self._next_cache_ID 
@@ -39,12 +44,12 @@ class SymbolicInterpreter(SimpleInterpreter):
         l.debug(f"  CONSTRAINTS: {self._constraints}")
         l.debug(f"  NEXT CACHE ID: {self._next_cache_ID}")
     
-    @override
-    def step_get(self, bc):
-        if bc["field"]["name"] == CONST_ASSERTION_DISABLED:
-            self.current_method().stack.append((0, CONST_ASSERTION_DISABLED))
-        else:
-            self.done = f"can't handle get operations"
+    # @override
+    # def step_get(self, bc):
+    #     if bc["field"]["name"] == CONST_ASSERTION_DISABLED:
+    #         self.current_method().stack.append((0, CONST_ASSERTION_DISABLED))
+    #     else:
+    #         self.done = f"can't handle get operations"
 
     @override
     def step_push(self, bc):

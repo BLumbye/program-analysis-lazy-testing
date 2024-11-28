@@ -60,11 +60,11 @@ class SimpleInterpreter:
         return self.method_stack[-1]
 
     def debug_step(self, next):
-        l.debug(f"STEP {self.step_count}:")
-        l.debug(f"  METHOD: {self.current_method().class_name}.{self.current_method().name}")
-        l.debug(f"  PC: {self.current_method().pc} {next}")
-        l.debug(f"  LOCALS: {self.current_method().locals}")
-        l.debug(f"  STACK: {self.current_method().stack}")
+        print(f"STEP {self.step_count}:")
+        print(f"  METHOD: {self.current_method().class_name}.{self.current_method().name}")
+        print(f"  PC: {self.current_method().pc} {next}")
+        print(f"  LOCALS: {self.current_method().locals}")
+        print(f"  STACK: {self.current_method().stack}")
 
     def step(self):
         self.step_count += 1
@@ -85,7 +85,7 @@ class SimpleInterpreter:
         else:
             raise Exception(f"can't handle {next['opr']!r}")
     
-    def interpret(self, limit=1000000) -> InterpretResult:
+    def interpret(self, limit=100000) -> InterpretResult:
         for _ in range(limit):
             self.step()
             if self.done:
@@ -115,6 +115,7 @@ class SimpleInterpreter:
         if not bc["static"]:
             self.done = "non-static fields not implemented"
             return
+        
         self.current_method().stack.append(self.fields[bc["field"]["class"]][bc["field"]["name"]])
         self.constant_dependencies.add(constant_name(bc["field"]["name"], bc["field"]["class"]))
 
