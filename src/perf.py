@@ -21,13 +21,18 @@ def perf():
     else:
         codebases = all_codebases()
 
+    symbolic_interpreter = True
+    if(len(sys.argv) >= 3):
+        symbolic_interpreter = sys.argv[2] == "symbolic"
+
+
     set_should_log(False)
     repetitions = 100
     results = []
     for i in range(repetitions):
         result = DeltaResult()
         for codebase in codebases:
-            delta = eval_codebase(codebase, True)
+            delta = eval_codebase(codebase, symbolic_interpreter)
             result.add_time(delta)
         results.append(result)
     

@@ -48,7 +48,7 @@ def test_detect_changed_dependency_method():
     snapshot_next = codebase_snapshot(codebase_next)
     diff = diff_snapshots(snapshot_prev, snapshot_next)
     print(diff.changed_methods)
-    assert abs_method_name("Simple", "C") in diff.changed_methods
+    assert abs_method_name("Simple", "MethodThatChangesImplementation") in diff.changed_methods
 
 def test_B_method_has_not_changed():
     codebase_prev = load_codebase("detect_function_changes", False)

@@ -102,7 +102,8 @@ def tests_to_be_rerun(prev: SavedResult, next: EntitySnapshot, diff: SnapshotDif
     for method in diff.changed_methods:
         if method in prev.entity_changes_tests:
             tests = prev.entity_changes_tests[method]
-            to_be_run.add(*tests)
+            for test in tests:
+                to_be_run.add(test)
     
     
     for constant in diff.changed_constants:
