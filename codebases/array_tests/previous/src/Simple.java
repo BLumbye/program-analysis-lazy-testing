@@ -9,6 +9,10 @@ public class Simple {
         return sum;
     }
 
+    public static int add(int x, int y) {
+        return x + y;
+    }
+
     @Test(shouldRunSymbolic = true, shouldRunDynamic = true)
     public void detectArrayBecomesNull() {
         int[] arrayBecomesNull = new int[]{0, 1, 2, 3};
@@ -55,6 +59,20 @@ public class Simple {
         assert sum(arrayBecomesLonger) >= 3;
     }
 
+    @Test(shouldRunSymbolic = false, shouldRunDynamic = true)
+    public void elementHasExpression() {
+        int[] arrayHasExpression = new int[]{add(3, 4), 1, 2, 3};
+        assert arrayHasExpression[0] >= 5;
+    }
+
+    @Test(shouldRunSymbolic = false, shouldRunDynamic = true)
+    public void elementGetsExpression() {
+        int[] arrayHasExpression = new int[]{0, 1, 2, 3};
+        assert arrayHasExpression[0] >= 0;
+        arrayHasExpression[0] = add(3, 4);
+        assert arrayHasExpression[0] >= 5;
+    }
+
     @Test(shouldRunSymbolic = true, shouldRunDynamic = true)
     public void ifTheIndexWeUseForAConditionChangesWeMustRunAgain() { // sum of array is larger than before
         // in the first iteration we update index 0, which is does not change the result
@@ -67,4 +85,21 @@ public class Simple {
         arrayDoesNotChange[indexBecomeOne] = 99;
         assert arrayDoesNotChange[1] == 1;
     }
+
+    @Test(shouldRunSymbolic = false, shouldRunDynamic = true)
+    public void cmpArrays() {
+        int array1[] = { 1, 2, 100, -13, 23 };
+        int array2[] = { 1, 2, 100, -13, 23 };
+        assert array1.length == array2.length;
+    }
+
+    @Test(shouldRunSymbolic = true, shouldRunDynamic = true)
+    public void cmpArrayElems() {
+        int array1[] = { 1, 2, 100, -13, 23 };
+        int array2[] = { 1, 2, 100, -13, 23 };
+        for (int i = 0; i < array1.length; i++) {
+          assert array1[i] == array2[i];
+        }
+    }
+
 }
